@@ -32,7 +32,7 @@ import java.util.*;
 public class DataLoader {
 
     private static final Logger log = LoggerFactory.getLogger(DataLoader.class);
-    private static final int LIMITE_CARTAS = 2000;
+    private static final int LIMITE_CARTAS = 500;
 
     @Bean
     CommandLineRunner initDatabase(
