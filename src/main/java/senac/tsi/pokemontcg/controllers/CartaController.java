@@ -1,0 +1,207 @@
+package senac.tsi.pokemontcg.controllers;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import senac.tsi.pokemontcg.entities.Carta;
+import senac.tsi.pokemontcg.exceptions.ErrorResponse;
+import senac.tsi.pokemontcg.services.CartaService;
+
+import java.net.URI;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
+@Tag(name = "Cartas", description = "CRUD e operações especiais para cartas do Pokémon TCG")
+@RestController
+@RequestMapping("/cartas")
+public class CartaController {
+
+    private final CartaService cartaService;
+    private final PagedResourcesAssembler<Carta> pagedAssembler;
+
+    @Autowired
+    public CartaController(CartaService cartaService,
+                           PagedResourcesAssembler<Carta> pagedAssembler) {
+        this.cartaService = cartaService;
+        this.pagedAssembler = pagedAssembler;
+    }
+
+
+    @Operation(
+        summary = "Lista todas as cartas",
+        description = "Retorna todas as cartas cadastradas no banco, com paginação. "
+                + "Use os parâmetros: ?page=0&size=10&sort=nome,asc"
+    )
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<PagedModel<EntityModel<Carta>>> listarTodas(
+            @ParameterObject Pageable pageable) {
+        Page<Carta> cartas = cartaService.listarTodas(pageable);
+        PagedModel<EntityModel<Carta>> pagedModel = pagedAssembler.toModel(cartas,
+                carta -> EntityModel.of(carta,
+                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId())).withSelfRel()));
+        return ResponseEntity.ok(pagedModel);
+    }
+
+
+    @Operation(
+        summary = "Busca uma carta por ID",
+        description = "Retorna os dados completos de uma carta específica, "
+                + "com links HATEOAS para: self, listar_todas, atualizar e deletar."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Carta encontrada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<EntityModel<Carta>> buscarPorId(
+            @Parameter(description = "ID interno da carta", example = "1")
+            @PathVariable Long id) {
+        Carta carta = cartaService.buscarPorId(id);
+        EntityModel<Carta> model = EntityModel.of(carta,
+                linkTo(methodOn(CartaController.class).buscarPorId(id)).withSelfRel(),
+                linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"),
+                linkTo(methodOn(CartaController.class).atualizar(id, null)).withRel("atualizar"),
+                linkTo(methodOn(CartaController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(model);
+    }
+
+
+    @Operation(
+        summary = "Cria uma nova carta",
+        description = "Cadastra uma nova carta no banco de dados. "
+                + "O campo 'categoria' deve ser: POKEMON, TREINADOR ou ENERGIA."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Carta criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos (campos obrigatórios faltando ou formato errado)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping
+    public ResponseEntity<EntityModel<Carta>> criar(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Dados da carta a ser criada",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                    {
+                                      "nome": "Charizard",
+                                      "categoria": "POKEMON",
+                                      "pontosDeVida": 120,
+                                      "imagemUrl": "https://assets.tcgdex.net/pt/base/base1/4/high.png",
+                                      "numeroLocal": "4",
+                                      "idExterno": "base1-4"
+                                    }""")))
+            @Valid @RequestBody Carta carta) {
+        Carta salva = cartaService.criar(carta);
+        EntityModel<Carta> model = EntityModel.of(salva,
+                linkTo(methodOn(CartaController.class).buscarPorId(salva.getId())).withSelfRel(),
+                linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
+        return ResponseEntity.created(URI.create("/cartas/" + salva.getId())).body(model);
+    }
+
+
+    @Operation(
+        summary = "Atualiza uma carta existente",
+        description = "Atualiza todos os dados de uma carta identificada pelo ID."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Carta atualizada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<EntityModel<Carta>> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody Carta carta) {
+        Carta atualizada = cartaService.atualizar(id, carta);
+        EntityModel<Carta> model = EntityModel.of(atualizada,
+                linkTo(methodOn(CartaController.class).buscarPorId(id)).withSelfRel(),
+                linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"),
+                linkTo(methodOn(CartaController.class).deletar(id)).withRel("deletar"));
+        return ResponseEntity.ok(model);
+    }
+
+
+    @Operation(
+        summary = "Remove uma carta",
+        description = "Remove permanentemente uma carta do banco de dados. Retorna 204 sem corpo."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Carta removida com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+        cartaService.deletar(id);
+        return ResponseEntity.noContent().build(); // HTTP 204
+    }
+
+
+    @Operation(
+        summary = "Busca cartas por nome",
+        description = "Busca parcial e case-insensitive pelo nome. Ex: ?nome=char retorna Charizard, Charmander, etc."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resultados da busca"),
+            @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/buscar")
+    public ResponseEntity<PagedModel<EntityModel<Carta>>> buscarPorNome(
+            @Parameter(description = "Termo de busca", example = "Charizard")
+            @RequestParam String nome,
+            @ParameterObject Pageable pageable) {
+        Page<Carta> cartas = cartaService.buscarPorNome(nome, pageable);
+        PagedModel<EntityModel<Carta>> pagedModel = pagedAssembler.toModel(cartas,
+                carta -> EntityModel.of(carta,
+                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId())).withSelfRel()));
+        return ResponseEntity.ok(pagedModel);
+    }
+
+
+    @Operation(
+        summary = "Importa uma carta da API TCGdex",
+        description = "Busca uma carta na API externa TCGdex usando o ID externo (ex: 'base1-4') "
+                + "e a salva no banco de dados local. Retorna 404 se não encontrada na TCGdex."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Carta importada e salva com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Carta não encontrada na TCGdex",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Falha de comunicação com a TCGdex",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/importar/{idExterno}")
+    public ResponseEntity<EntityModel<Carta>> importarDaTcgdex(
+            @Parameter(description = "ID externo da carta na TCGdex", example = "base1-4")
+            @PathVariable String idExterno) {
+        Carta importada = cartaService.importarDaTcgdex(idExterno);
+        EntityModel<Carta> model = EntityModel.of(importada,
+                linkTo(methodOn(CartaController.class).buscarPorId(importada.getId())).withSelfRel(),
+                linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
+        return ResponseEntity.created(URI.create("/cartas/" + importada.getId())).body(model);
+    }
+}
