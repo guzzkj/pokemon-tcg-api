@@ -1028,3 +1028,49 @@ Ou pelo terminal:
 ---
 
 *Tutorial gerado como material de apoio para a disciplina de Web Services — SENAC TSI.*
+
+
+GlobalExceptionHandler.java
+
+
+@ExceptionHandler(DataIntegrityViolationException.class)
+@ResponseStatus(HttpStatus.CONFLICT) // Retorna HTTP 409 Conflict
+public ErrorResponse handleViolacaoDeIntegridade(DataIntegrityViolationException ex) {
+    return new ErrorResponse(
+            409, 
+            "Conflito de Relacionamento", 
+            "Não é possível excluir este recurso pois ele está vinculado a outros itens (ex: Decks ou Tipos)."
+    );
+}
+
+
+
+
+
+Abra a classe Carta.java e adicione este método no final da classe (antes da última chave }):
+
+
+
+
+import jakarta.persistence.PreRemove;
+
+// ... (restante da classe Carta)
+
+    @PreRemove
+    private void preRemove() {
+        // Antes de deletar a carta, remove ela de todos os Decks vinculados
+        for (Deck deck : decks) {
+            deck.getCartas().remove(this);
+        }
+        // Remove a carta de todos os Tipos vinculados
+        for (Tipo tipo : tipos) {
+            tipo.getCartas().remove(this);
+        }
+    }
+}
+
+
+
+
+
+
