@@ -30,6 +30,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 @Tag(name = "Cartas", description = "CRUD e operações especiais para cartas do Pokémon TCG")
 @RestController
 @RequestMapping("/cartas")
+@org.springframework.validation.annotation.Validated
 public class CartaController {
 
     private final CartaService cartaService;
@@ -74,7 +75,7 @@ public class CartaController {
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<Carta>> buscarPorId(
             @Parameter(description = "ID interno da carta", example = "1")
-            @PathVariable Long id) {
+            @PathVariable @jakarta.validation.constraints.Positive Long id) {
         Carta carta = cartaService.buscarPorId(id);
         EntityModel<Carta> model = EntityModel.of(carta,
                 linkTo(methodOn(CartaController.class).buscarPorId(id)).withSelfRel(),
@@ -133,7 +134,7 @@ public class CartaController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<EntityModel<Carta>> atualizar(
-            @PathVariable Long id,
+            @PathVariable @jakarta.validation.constraints.Positive Long id,
             @Valid @RequestBody Carta carta) {
         Carta atualizada = cartaService.atualizar(id, carta);
         EntityModel<Carta> model = EntityModel.of(atualizada,
@@ -154,7 +155,7 @@ public class CartaController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable @jakarta.validation.constraints.Positive Long id) {
         cartaService.deletar(id);
         return ResponseEntity.noContent().build(); // HTTP 204
     }
@@ -172,7 +173,7 @@ public class CartaController {
     @GetMapping("/buscar")
     public ResponseEntity<PagedModel<EntityModel<Carta>>> buscarPorNome(
             @Parameter(description = "Termo de busca", example = "Charizard")
-            @RequestParam String nome,
+            @RequestParam @jakarta.validation.constraints.Size(min = 2, max = 100, message = "O termo de busca deve ter no mínimo 2 caracteres") String nome,
             @ParameterObject Pageable pageable) {
         Page<Carta> cartas = cartaService.buscarPorNome(nome, pageable);
         PagedModel<EntityModel<Carta>> pagedModel = pagedAssembler.toModel(cartas,
@@ -197,7 +198,7 @@ public class CartaController {
     @PostMapping("/importar/{idExterno}")
     public ResponseEntity<EntityModel<Carta>> importarDaTcgdex(
             @Parameter(description = "ID externo da carta na TCGdex", example = "base1-4")
-            @PathVariable String idExterno) {
+            @PathVariable @jakarta.validation.constraints.NotBlank String idExterno) {
         Carta importada = cartaService.importarDaTcgdex(idExterno);
         EntityModel<Carta> model = EntityModel.of(importada,
                 linkTo(methodOn(CartaController.class).buscarPorId(importada.getId())).withSelfRel(),

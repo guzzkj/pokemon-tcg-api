@@ -39,7 +39,8 @@ public class CartaService {
 
     @Transactional(readOnly = true)
     public Page<Carta> buscarPorNome(String nome, Pageable pageable) {
-        return cartaRepository.findByNomeContainingIgnoreCase(nome, pageable);
+        String nomeSanitizado = nome.replace("%", "\\%").replace("_", "\\_");
+        return cartaRepository.findByNomeContainingIgnoreCase(nomeSanitizado, pageable);
     }
 
     @Transactional(readOnly = true)

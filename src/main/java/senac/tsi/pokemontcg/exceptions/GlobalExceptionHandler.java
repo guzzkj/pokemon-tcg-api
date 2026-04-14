@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import jakarta.validation.ConstraintViolationException;
 
 /**
  * Centraliza o tratamento de exceções — intercepta erros de qualquer controller
@@ -15,6 +18,8 @@ import java.util.stream.Collectors;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -44,9 +49,16 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(400, "Dados inválidos na requisição", mensagem);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleConstraintViolation(ConstraintViolationException ex) {
+        return new ErrorResponse(400, "Dados inválidos na requisição", ex.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponse handleGenerico(Exception ex) {
-        return new ErrorResponse(500, "Erro interno do servidor", ex.getMessage());
+        log.error("Erro interno não tratado", ex);
+        return new ErrorResponse(500, "Erro interno do servidor", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
     }
 }

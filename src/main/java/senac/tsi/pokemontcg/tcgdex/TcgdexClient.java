@@ -33,6 +33,8 @@ public class TcgdexClient {
         return restClient.get().uri("/cards").retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Nenhuma carta encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(new ParameterizedTypeReference<>() {});
@@ -42,6 +44,8 @@ public class TcgdexClient {
         return restClient.get().uri("/cards/{id}", id).retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Carta '" + id + "' não encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(TcgdexCartaDto.class);
@@ -51,6 +55,8 @@ public class TcgdexClient {
         return restClient.get().uri("/sets").retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Nenhuma coleção encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(new ParameterizedTypeReference<>() {});
@@ -60,6 +66,8 @@ public class TcgdexClient {
         return restClient.get().uri("/sets/{id}", id).retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Coleção '" + id + "' não encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(TcgdexColecaoDto.class);
@@ -69,6 +77,8 @@ public class TcgdexClient {
         return restClient.get().uri("/series").retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Nenhuma série encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(new ParameterizedTypeReference<>() {});
@@ -78,6 +88,8 @@ public class TcgdexClient {
         return restClient.get().uri("/series/{id}", id).retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Série '" + id + "' não encontrada na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(TcgdexSerieDto.class);
@@ -87,6 +99,8 @@ public class TcgdexClient {
         return restClient.get().uri("/types").retrieve()
                 .onStatus(s -> s.value() == 404,
                         (req, resp) -> { throw new TcgdexNaoEncontradoException("Nenhum tipo encontrado na API TCGdex."); })
+                .onStatus(s -> s.is4xxClientError() && s.value() != 404,
+                        (req, resp) -> { throw new ErroIntegracaoExternaException("Requisição inválida para a API TCGdex (Erro 4xx)."); })
                 .onStatus(s -> s.is5xxServerError(),
                         (req, resp) -> { throw new ErroIntegracaoExternaException("Falha de comunicação com a API TCGdex."); })
                 .body(new ParameterizedTypeReference<>() {});

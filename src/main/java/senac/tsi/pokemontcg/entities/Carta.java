@@ -45,6 +45,8 @@ public class Carta {
     private CategoriaCartaEnum categoria;
 
     @Schema(description = "Pontos de vida da carta (HP). Null para Treinadores e Energias.", example = "120")
+    @jakarta.validation.constraints.Min(value = 0, message = "Os pontos de vida não podem ser negativos")
+    @jakarta.validation.constraints.Max(value = 999, message = "Os pontos de vida não podem ultrapassar 999")
     private Integer pontosDeVida;
 
     @ManyToOne
