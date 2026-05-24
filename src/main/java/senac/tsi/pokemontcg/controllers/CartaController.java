@@ -19,11 +19,13 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import senac.tsi.pokemontcg.dto.CartaV2Response;
 import senac.tsi.pokemontcg.entities.Carta;
 import senac.tsi.pokemontcg.exceptions.ErrorResponse;
 import senac.tsi.pokemontcg.services.CartaService;
 
 import java.net.URI;
+import java.util.Set;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
@@ -62,23 +64,48 @@ public class CartaController {
     }
 
 
+    private static final Set<String> VERSOES_SUPORTADAS = Set.of("v1", "v2");
+
     @Operation(
         summary = "Busca uma carta por ID",
-        description = "Retorna os dados completos de uma carta específica, "
-                + "com links HATEOAS para: self, listar_todas, atualizar e deletar."
+        description = "Retorna os dados completos de uma carta específica. "
+                + "Use o header **X-API-Version** para selecionar a versão da resposta:\n\n"
+                + "- `v1` (padrão): campos base da carta\n"
+                + "- `v2`: mesmos campos + `nomeCompleto` (ex: \"Charizard (POKEMON · 120 HP)\")"
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta encontrada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Versão de API não suportada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
-    public ResponseEntity<EntityModel<Carta>> buscarPorId(
+    public ResponseEntity<?> buscarPorId(
             @Parameter(description = "ID interno da carta", example = "1")
-            @PathVariable @jakarta.validation.constraints.Positive Long id) {
+            @PathVariable @jakarta.validation.constraints.Positive Long id,
+            @Parameter(description = "Versão da API (v1 ou v2)", example = "v1")
+            @RequestHeader(value = "X-API-Version", defaultValue = "v1") String versao) {
+
+        if (!VERSOES_SUPORTADAS.contains(versao.toLowerCase())) {
+            ErrorResponse erro = new ErrorResponse(400, "Versão não suportada",
+                    "X-API-Version '" + versao + "' inválida. Versões suportadas: v1, v2.");
+            return ResponseEntity.badRequest().body(erro);
+        }
+
         Carta carta = cartaService.buscarPorId(id);
+
+        if ("v2".equalsIgnoreCase(versao)) {
+            CartaV2Response dto = CartaV2Response.de(carta);
+            EntityModel<CartaV2Response> model = EntityModel.of(dto,
+                    linkTo(methodOn(CartaController.class).buscarPorId(id, versao)).withSelfRel(),
+                    linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
+            return ResponseEntity.ok(model);
+        }
+
+        // v1 — comportamento original
         EntityModel<Carta> model = EntityModel.of(carta,
-                linkTo(methodOn(CartaController.class).buscarPorId(id)).withSelfRel(),
+                linkTo(methodOn(CartaController.class).buscarPorId(id, versao)).withSelfRel(),
                 linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"),
                 linkTo(methodOn(CartaController.class).atualizar(id, null)).withRel("atualizar"),
                 linkTo(methodOn(CartaController.class).deletar(id)).withRel("deletar"));
