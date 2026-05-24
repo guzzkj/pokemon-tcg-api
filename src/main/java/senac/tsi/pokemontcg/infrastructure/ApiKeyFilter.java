@@ -22,7 +22,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     private static final Set<String> CAMINHOS_PUBLICOS = Set.of(
             "/api-keys",
             "/swagger-ui",
-            "/v3/api-docs",
+            "/api-docs",
             "/h2-console"
     );
 
@@ -37,6 +37,10 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Preflights CORS (OPTIONS) nunca carregam X-API-Key — deixar passar
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
         String path = request.getRequestURI();
         return CAMINHOS_PUBLICOS.stream().anyMatch(path::startsWith);
     }

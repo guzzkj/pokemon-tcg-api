@@ -63,7 +63,12 @@ public class IdempotencyFilter extends OncePerRequestFilter {
             return;
         }
 
-        idempotencyService.registrar(chave, request.getRequestURI());
         filterChain.doFilter(request, response);
+
+        // Registra a chave somente se o downstream processou com sucesso (2xx)
+        // Erro 4xx/5xx = operação não concluída; cliente deve poder tentar novamente
+        if (response.getStatus() < 300) {
+            idempotencyService.registrar(chave, request.getRequestURI());
+        }
     }
 }
