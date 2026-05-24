@@ -44,7 +44,11 @@ public class SerieController {
 
     @Operation(summary = "Lista todas as séries",
                description = "Retorna todas as séries cadastradas, com paginação.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PagedModel<EntityModel<Serie>>> listarTodas(
@@ -61,6 +65,8 @@ public class SerieController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Série encontrada"),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -79,6 +85,8 @@ public class SerieController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Série criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
@@ -103,9 +111,11 @@ public class SerieController {
                description = "Atualiza nome, código externo e logo de uma série identificada pelo ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Série atualizada"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -121,8 +131,9 @@ public class SerieController {
 
     @Operation(summary = "Remove uma série")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Série removida"),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
@@ -136,6 +147,8 @@ public class SerieController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/buscar")
@@ -149,24 +162,4 @@ public class SerieController {
         return ResponseEntity.ok(pagedModel);
     }
 
-    @Operation(summary = "Importa uma série da API TCGdex",
-               description = "Busca uma série na TCGdex pelo ID externo (ex: 'base') e a salva no banco local. "
-                       + "Se a série já existir no banco, retorna a existente sem duplicar.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Série importada e salva com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Série não encontrada na TCGdex",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Falha de comunicação com a TCGdex",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/importar/{idExterno}")
-    public ResponseEntity<EntityModel<Serie>> importarDaTcgdex(
-            @Parameter(description = "ID externo da série na TCGdex", example = "base")
-            @PathVariable String idExterno) {
-        Serie importada = serieService.importarDaTcgdex(idExterno);
-        EntityModel<Serie> model = EntityModel.of(importada,
-                linkTo(methodOn(SerieController.class).buscarPorId(importada.getId())).withSelfRel(),
-                linkTo(methodOn(SerieController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
-        return ResponseEntity.created(URI.create("/series/" + importada.getId())).body(model);
-    }
 }

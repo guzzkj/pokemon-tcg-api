@@ -43,7 +43,11 @@ public class TipoController {
     }
 
     @Operation(summary = "Lista todos os tipos", description = "Retorna todos os tipos de energia cadastrados, com paginação.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PagedModel<EntityModel<Tipo>>> listarTodos(
@@ -60,6 +64,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tipo encontrado"),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -78,6 +84,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Tipo criado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
@@ -96,7 +104,11 @@ public class TipoController {
                description = "Atualiza o nome de um tipo de energia identificado pelo ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tipo atualizado"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -112,8 +124,9 @@ public class TipoController {
 
     @Operation(summary = "Remove um tipo")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Tipo removido"),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
@@ -127,6 +140,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/buscar")
@@ -145,6 +160,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta adicionada ao tipo"),
             @ApiResponse(responseCode = "404", description = "Tipo ou Carta não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{tipoId}/cartas/{cartaId}")
@@ -162,6 +179,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Associação removida com sucesso"),
             @ApiResponse(responseCode = "404", description = "Tipo ou Carta não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{tipoId}/cartas/{cartaId}")

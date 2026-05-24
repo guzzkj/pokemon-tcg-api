@@ -65,9 +65,7 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de cartas da TCGdex"),
-            @ApiResponse(responseCode = "404", description = "Nenhuma carta encontrada na TCGdex",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Erro de comunicação com a TCGdex",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/cartas")
@@ -75,7 +73,6 @@ public class TcgdexController {
             @ParameterObject Pageable pageable) {
         List<TcgdexCartaResumidaDto> todas = tcgdexClient.listarCartas();
 
-        // Paginação manual: calcula os índices de início e fim da página
         int inicio = (int) pageable.getOffset();
         int fim = Math.min(inicio + pageable.getPageSize(), todas.size());
         List<TcgdexCartaResumidaDto> paginaAtual = (inicio > todas.size())
@@ -98,7 +95,7 @@ public class TcgdexController {
             @ApiResponse(responseCode = "200", description = "Carta encontrada na TCGdex"),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada na TCGdex",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Erro de comunicação com a TCGdex",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/cartas/{id}")
@@ -119,7 +116,7 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de coleções da TCGdex"),
-            @ApiResponse(responseCode = "500", description = "Erro de comunicação com a TCGdex",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/colecoes")
@@ -149,7 +146,7 @@ public class TcgdexController {
             @ApiResponse(responseCode = "200", description = "Coleção encontrada na TCGdex"),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada na TCGdex",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Erro de comunicação com a TCGdex",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/colecoes/{id}")
@@ -167,6 +164,11 @@ public class TcgdexController {
         summary = "Busca cartas na TCGdex por nome",
         description = "Filtra localmente a lista completa da TCGdex pelo nome informado (após buscar tudo da API externa)."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resultados da busca"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/cartas/buscar")
     public ResponseEntity<PagedModel<EntityModel<TcgdexCartaResumidaDto>>> buscarCartasPorNome(
             @Parameter(description = "Termo de busca pelo nome", example = "Charizard")

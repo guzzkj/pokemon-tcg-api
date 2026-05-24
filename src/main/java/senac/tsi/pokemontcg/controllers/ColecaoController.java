@@ -52,7 +52,11 @@ public class ColecaoController {
 
     @Operation(summary = "Lista todas as coleções",
                description = "Retorna todas as coleções cadastradas, com paginação.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PagedModel<EntityModel<Colecao>>> listarTodas(
@@ -69,6 +73,8 @@ public class ColecaoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Coleção encontrada"),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -88,6 +94,8 @@ public class ColecaoController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Coleção criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
@@ -113,7 +121,11 @@ public class ColecaoController {
                description = "Atualiza todos os dados de uma coleção identificada pelo ID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Coleção atualizada"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -129,8 +141,9 @@ public class ColecaoController {
 
     @Operation(summary = "Remove uma coleção")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Coleção removida"),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
@@ -144,6 +157,8 @@ public class ColecaoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/buscar")
@@ -159,17 +174,22 @@ public class ColecaoController {
 
     @Operation(summary = "Lista as cartas de uma coleção",
                description = "Retorna todas as cartas pertencentes a uma coleção específica, com paginação.")
-    @ApiResponse(responseCode = "200", description = "Lista de cartas da coleção")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de cartas da coleção"),
+            @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{id}/cartas")
     public ResponseEntity<PagedModel<EntityModel<Carta>>> listarCartasDaColecao(
             @PathVariable Long id,
             @ParameterObject Pageable pageable) {
-        // Valida se a coleção existe antes de buscar as cartas
         colecaoService.buscarPorId(id);
         Page<Carta> cartas = cartaService.listarPorColecao(id, pageable);
         PagedModel<EntityModel<Carta>> pagedModel = cartaPagedAssembler.toModel(cartas,
                 carta -> EntityModel.of(carta,
-                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId())).withSelfRel()));
+                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId(), "v1")).withSelfRel()));
         return ResponseEntity.ok(pagedModel);
     }
 }

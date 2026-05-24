@@ -44,7 +44,11 @@ public class DetalheEstatisticaController {
 
     @Operation(summary = "Lista todos os detalhes estatísticos",
                description = "Retorna todos os detalhes cadastrados, com paginação.")
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PagedModel<EntityModel<DetalheEstatistica>>> listarTodos(
@@ -60,6 +64,8 @@ public class DetalheEstatisticaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalhe encontrado"),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -78,6 +84,8 @@ public class DetalheEstatisticaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalhe encontrado"),
             @ApiResponse(responseCode = "404", description = "Carta ou detalhe não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/carta/{cartaId}")
@@ -87,7 +95,7 @@ public class DetalheEstatisticaController {
         DetalheEstatistica detalhe = detalheService.buscarPorCartaId(cartaId);
         EntityModel<DetalheEstatistica> model = EntityModel.of(detalhe,
                 linkTo(methodOn(DetalheEstatisticaController.class).buscarPorId(detalhe.getId())).withSelfRel(),
-                linkTo(methodOn(CartaController.class).buscarPorId(cartaId)).withRel("carta"));
+                linkTo(methodOn(CartaController.class).buscarPorId(cartaId, "v1")).withRel("carta"));
         return ResponseEntity.ok(model);
     }
 
@@ -95,9 +103,11 @@ public class DetalheEstatisticaController {
                description = "Cria e associa um DetalheEstatistica a uma Carta existente pelo cartaId.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Detalhe criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/carta/{cartaId}")
@@ -116,14 +126,18 @@ public class DetalheEstatisticaController {
         DetalheEstatistica salvo = detalheService.criar(cartaId, detalhe);
         EntityModel<DetalheEstatistica> model = EntityModel.of(salvo,
                 linkTo(methodOn(DetalheEstatisticaController.class).buscarPorId(salvo.getId())).withSelfRel(),
-                linkTo(methodOn(CartaController.class).buscarPorId(cartaId)).withRel("carta"));
+                linkTo(methodOn(CartaController.class).buscarPorId(cartaId, "v1")).withRel("carta"));
         return ResponseEntity.created(URI.create("/detalhes/" + salvo.getId())).body(model);
     }
 
     @Operation(summary = "Atualiza um detalhe estatístico")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalhe atualizado"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -139,8 +153,9 @@ public class DetalheEstatisticaController {
 
     @Operation(summary = "Remove um detalhe estatístico")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Detalhe removido"),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
@@ -154,6 +169,8 @@ public class DetalheEstatisticaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'artista' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/buscar")

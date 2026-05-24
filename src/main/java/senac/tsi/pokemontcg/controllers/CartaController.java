@@ -35,6 +35,8 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 @org.springframework.validation.annotation.Validated
 public class CartaController {
 
+    private static final Set<String> VERSOES_SUPORTADAS = Set.of("v1", "v2");
+
     private final CartaService cartaService;
     private final PagedResourcesAssembler<Carta> pagedAssembler;
 
@@ -51,7 +53,11 @@ public class CartaController {
         description = "Retorna todas as cartas cadastradas no banco, com paginação. "
                 + "Use os parâmetros: ?page=0&size=10&sort=nome,asc"
     )
-    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<PagedModel<EntityModel<Carta>>> listarTodas(
@@ -63,8 +69,6 @@ public class CartaController {
         return ResponseEntity.ok(pagedModel);
     }
 
-
-    private static final Set<String> VERSOES_SUPORTADAS = Set.of("v1", "v2");
 
     @Operation(
         summary = "Busca uma carta por ID",
@@ -78,6 +82,8 @@ public class CartaController {
             @ApiResponse(responseCode = "400", description = "Versão de API não suportada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
@@ -103,7 +109,6 @@ public class CartaController {
             return ResponseEntity.ok(model);
         }
 
-        // v1 — comportamento original
         EntityModel<Carta> model = EntityModel.of(carta,
                 linkTo(methodOn(CartaController.class).buscarPorId(id, versao)).withSelfRel(),
                 linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"),
@@ -121,6 +126,8 @@ public class CartaController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Carta criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos (campos obrigatórios faltando ou formato errado)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
@@ -154,9 +161,11 @@ public class CartaController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
@@ -177,14 +186,15 @@ public class CartaController {
         description = "Remove permanentemente uma carta do banco de dados. Retorna 204 sem corpo."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Carta removida com sucesso"),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable @jakarta.validation.constraints.Positive Long id) {
         cartaService.deletar(id);
-        return ResponseEntity.noContent().build(); // HTTP 204
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -194,7 +204,9 @@ public class CartaController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
-            @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+            @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' inválido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/buscar")
@@ -210,26 +222,4 @@ public class CartaController {
     }
 
 
-    @Operation(
-        summary = "Importa uma carta da API TCGdex",
-        description = "Busca uma carta na API externa TCGdex usando o ID externo (ex: 'base1-4') "
-                + "e a salva no banco de dados local. Retorna 404 se não encontrada na TCGdex."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Carta importada e salva com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Carta não encontrada na TCGdex",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Falha de comunicação com a TCGdex",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/importar/{idExterno}")
-    public ResponseEntity<EntityModel<Carta>> importarDaTcgdex(
-            @Parameter(description = "ID externo da carta na TCGdex", example = "base1-4")
-            @PathVariable @jakarta.validation.constraints.NotBlank String idExterno) {
-        Carta importada = cartaService.importarDaTcgdex(idExterno);
-        EntityModel<Carta> model = EntityModel.of(importada,
-                linkTo(methodOn(CartaController.class).buscarPorId(importada.getId(), "v1")).withSelfRel(),
-                linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
-        return ResponseEntity.created(URI.create("/cartas/" + importada.getId())).body(model);
-    }
 }
