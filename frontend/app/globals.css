@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pk-red: #cc0000;
+  --color-pk-red-dark: #990000;
+  --color-pk-yellow: #ffcb05;
+  --color-pk-yellow-dark: #e6b700;
+  --color-pk-blue: #003a70;
+  --color-pk-blue-light: #1a5fa8;
+  --color-pk-gray: #f5f5f5;
+  --color-pk-border: #e0e0e0;
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-pk-gray);
+  color: #1a1a1a;
+  font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}

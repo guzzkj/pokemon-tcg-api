@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git remote *)",
+      "Bash(mkdir -p api)",
+      "Bash(git mv *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk npx *)",
+      "Bash(rtk read *)",
+      "Bash(rtk npm *)"
+    ]
+  }
+}
