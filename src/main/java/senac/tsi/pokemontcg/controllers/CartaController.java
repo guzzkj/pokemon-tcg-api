@@ -59,7 +59,7 @@ public class CartaController {
         Page<Carta> cartas = cartaService.listarTodas(pageable);
         PagedModel<EntityModel<Carta>> pagedModel = pagedAssembler.toModel(cartas,
                 carta -> EntityModel.of(carta,
-                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId())).withSelfRel()));
+                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId(), "v1")).withSelfRel()));
         return ResponseEntity.ok(pagedModel);
     }
 
@@ -142,7 +142,7 @@ public class CartaController {
             @Valid @RequestBody Carta carta) {
         Carta salva = cartaService.criar(carta);
         EntityModel<Carta> model = EntityModel.of(salva,
-                linkTo(methodOn(CartaController.class).buscarPorId(salva.getId())).withSelfRel(),
+                linkTo(methodOn(CartaController.class).buscarPorId(salva.getId(), "v1")).withSelfRel(),
                 linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
         return ResponseEntity.created(URI.create("/cartas/" + salva.getId())).body(model);
     }
@@ -165,7 +165,7 @@ public class CartaController {
             @Valid @RequestBody Carta carta) {
         Carta atualizada = cartaService.atualizar(id, carta);
         EntityModel<Carta> model = EntityModel.of(atualizada,
-                linkTo(methodOn(CartaController.class).buscarPorId(id)).withSelfRel(),
+                linkTo(methodOn(CartaController.class).buscarPorId(id, "v1")).withSelfRel(),
                 linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"),
                 linkTo(methodOn(CartaController.class).deletar(id)).withRel("deletar"));
         return ResponseEntity.ok(model);
@@ -205,7 +205,7 @@ public class CartaController {
         Page<Carta> cartas = cartaService.buscarPorNome(nome, pageable);
         PagedModel<EntityModel<Carta>> pagedModel = pagedAssembler.toModel(cartas,
                 carta -> EntityModel.of(carta,
-                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId())).withSelfRel()));
+                        linkTo(methodOn(CartaController.class).buscarPorId(carta.getId(), "v1")).withSelfRel()));
         return ResponseEntity.ok(pagedModel);
     }
 
@@ -228,7 +228,7 @@ public class CartaController {
             @PathVariable @jakarta.validation.constraints.NotBlank String idExterno) {
         Carta importada = cartaService.importarDaTcgdex(idExterno);
         EntityModel<Carta> model = EntityModel.of(importada,
-                linkTo(methodOn(CartaController.class).buscarPorId(importada.getId())).withSelfRel(),
+                linkTo(methodOn(CartaController.class).buscarPorId(importada.getId(), "v1")).withSelfRel(),
                 linkTo(methodOn(CartaController.class).listarTodas(Pageable.unpaged())).withRel("listar_todas"));
         return ResponseEntity.created(URI.create("/cartas/" + importada.getId())).body(model);
     }
