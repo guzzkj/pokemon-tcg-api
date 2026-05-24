@@ -6,24 +6,12 @@ import { DetalheEstatistica, PagedResponse, ApiError } from "@/lib/types";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import Toast from "@/components/Toast";
+import { Field, Input, Textarea } from "@/components/Field";
+import { BarChart2, Plus, Search, X, Pencil, Trash2, Hash } from "lucide-react";
 
 type View = "list" | "create" | "edit";
-
-interface DetalheForm {
-  raridade: string;
-  artista: string;
-  descricao: string;
-  evolucaoDe: string;
-  cartaId: string;
-}
-
-const emptyForm: DetalheForm = {
-  raridade: "",
-  artista: "",
-  descricao: "",
-  evolucaoDe: "",
-  cartaId: "",
-};
+interface DetalheForm { raridade: string; artista: string; descricao: string; evolucaoDe: string; cartaId: string; }
+const emptyForm: DetalheForm = { raridade: "", artista: "", descricao: "", evolucaoDe: "", cartaId: "" };
 
 export default function DetalhesPage() {
   const [detalhes, setDetalhes] = useState<DetalheEstatistica[]>([]);
@@ -42,27 +30,15 @@ export default function DetalhesPage() {
   const load = useCallback(async (page = 0, artista = "") => {
     setLoading(true);
     try {
-      const path = artista
-        ? `/detalhes/buscar?artista=${encodeURIComponent(artista)}&page=${page}&size=10`
-        : `/detalhes?page=${page}&size=10`;
+      const path = artista ? `/detalhes/buscar?artista=${encodeURIComponent(artista)}&page=${page}&size=10` : `/detalhes?page=${page}&size=10`;
       const data = await get<PagedResponse<DetalheEstatistica>>(path);
       setDetalhes(extractList(data, "detalheEstatisticaList"));
-      setPageInfo({
-        number: data.page.number,
-        totalPages: data.page.totalPages,
-        totalElements: data.page.totalElements,
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao carregar detalhes", type: "error" });
-    } finally {
-      setLoading(false);
-    }
+      setPageInfo({ number: data.page.number, totalPages: data.page.totalPages, totalElements: data.page.totalElements });
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro ao carregar", type: "error" }); }
+    finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    load(0, artistaSearch);
-  }, [load, artistaSearch]);
+  useEffect(() => { load(0, artistaSearch); }, [load, artistaSearch]);
 
   async function buscarPorCarta(e: React.FormEvent) {
     e.preventDefault();
@@ -72,361 +48,162 @@ export default function DetalhesPage() {
       const data = await get<DetalheEstatistica>(`/detalhes/carta/${cartaIdSearch.trim()}`);
       setDetalhes([data]);
       setPageInfo({ number: 0, totalPages: 1, totalElements: 1 });
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Detalhe não encontrado para esta carta", type: "error" });
-      setDetalhes([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function openCreate() {
-    setForm(emptyForm);
-    setEditId(null);
-    setView("create");
-  }
-
-  function openEdit(d: DetalheEstatistica) {
-    setForm({
-      raridade: d.raridade ?? "",
-      artista: d.artista ?? "",
-      descricao: d.descricao ?? "",
-      evolucaoDe: d.evolucaoDe ?? "",
-      cartaId: d.carta?.id?.toString() ?? "",
-    });
-    setEditId(d.id);
-    setView("edit");
-  }
-
-  function closeModal() {
-    setView("list");
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Detalhe não encontrado", type: "error" }); setDetalhes([]); }
+    finally { setLoading(false); }
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault(); setSaving(true);
     try {
-      const payload = {
-        raridade: form.raridade || undefined,
-        artista: form.artista || undefined,
-        descricao: form.descricao || undefined,
-        evolucaoDe: form.evolucaoDe || undefined,
-      };
-
+      const payload = { raridade: form.raridade || undefined, artista: form.artista || undefined, descricao: form.descricao || undefined, evolucaoDe: form.evolucaoDe || undefined };
       if (view === "create") {
-        if (!form.cartaId) {
-          setToast({ message: "Informe o ID da carta", type: "error" });
-          setSaving(false);
-          return;
-        }
+        if (!form.cartaId) { setToast({ message: "Informe o ID da carta", type: "error" }); setSaving(false); return; }
         await post(`/detalhes/carta/${form.cartaId}`, payload);
-        setToast({ message: "Detalhe criado com sucesso!", type: "success" });
+        setToast({ message: "Detalhe criado!", type: "success" });
       } else {
         await put(`/detalhes/${editId}`, payload);
-        setToast({ message: "Detalhe atualizado com sucesso!", type: "success" });
+        setToast({ message: "Detalhe atualizado!", type: "success" });
       }
-      closeModal();
-      load(pageInfo.number, artistaSearch);
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao salvar", type: "error" });
-    } finally {
-      setSaving(false);
-    }
+      setView("list"); load(pageInfo.number, artistaSearch);
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro", type: "error" }); }
+    finally { setSaving(false); }
   }
 
   async function handleDelete(d: DetalheEstatistica) {
-    try {
-      await del(`/detalhes/${d.id}`);
-      setToast({ message: "Detalhe removido.", type: "success" });
-      setDeleteTarget(null);
-      load(pageInfo.number, artistaSearch);
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao deletar", type: "error" });
-      setDeleteTarget(null);
-    }
+    try { await del(`/detalhes/${d.id}`); setToast({ message: "Detalhe removido.", type: "success" }); setDeleteTarget(null); load(pageInfo.number, artistaSearch); }
+    catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro", type: "error" }); setDeleteTarget(null); }
   }
 
-  function handleArtistaSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setCartaIdSearch("");
-    setArtistaSearch(artistaInput);
-  }
-
-  function limparFiltros() {
-    setArtistaSearch("");
-    setArtistaInput("");
-    setCartaIdSearch("");
-    load(0, "");
-  }
+  function limpar() { setArtistaSearch(""); setArtistaInput(""); setCartaIdSearch(""); load(0, ""); }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-pk-blue">📊 Detalhes Estatísticos</h1>
-          <p className="text-gray-500 text-sm">Raridade, artista e lore (1:1 com Carta)</p>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-pk-surface-2 border border-pk-border rounded-lg flex items-center justify-center">
+            <BarChart2 size={18} className="text-pk-blue" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-pk-text">Detalhes Estatísticos</h1>
+            <p className="text-pk-subtle text-xs">Raridade, artista e lore · 1:1 com Carta</p>
+          </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="bg-pk-red hover:bg-pk-red-dark text-white font-bold px-4 py-2 rounded-lg transition-colors"
-        >
-          + Novo Detalhe
+        <button onClick={() => { setForm(emptyForm); setEditId(null); setView("create"); }}
+          className="flex items-center gap-2 bg-pk-red hover:bg-pk-red-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer">
+          <Plus size={16} /> Novo Detalhe
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="grid md:grid-cols-2 gap-2 mb-4">
-        <form onSubmit={handleArtistaSearch} className="flex gap-2">
-          <input
-            type="text"
-            value={artistaInput}
-            onChange={(e) => setArtistaInput(e.target.value)}
-            placeholder="Buscar por artista..."
-            className="flex-1 border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-          />
-          <button
-            type="submit"
-            className="bg-pk-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pk-blue-light transition-colors"
-          >
-            Buscar
-          </button>
+      <div className="grid md:grid-cols-2 gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); setCartaIdSearch(""); setArtistaSearch(artistaInput); }} className="flex gap-2">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-pk-subtle" />
+            <input type="text" value={artistaInput} onChange={(e) => setArtistaInput(e.target.value)} placeholder="Buscar por artista..."
+              className="w-full bg-pk-surface border border-pk-border rounded-lg pl-9 pr-3 py-2 text-sm text-pk-text placeholder:text-pk-subtle focus:outline-none focus:border-pk-red transition-colors" />
+          </div>
+          <button type="submit" className="bg-pk-surface-2 border border-pk-border px-4 py-2 rounded-lg text-sm text-pk-muted hover:text-pk-text transition-colors cursor-pointer">Buscar</button>
         </form>
 
         <form onSubmit={buscarPorCarta} className="flex gap-2">
-          <input
-            type="number"
-            min="1"
-            value={cartaIdSearch}
-            onChange={(e) => setCartaIdSearch(e.target.value)}
-            placeholder="ID da carta..."
-            className="flex-1 border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-          />
-          <button
-            type="submit"
-            className="bg-pk-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pk-blue-light transition-colors"
-          >
-            Por Carta
-          </button>
-          {(artistaSearch || cartaIdSearch) && (
-            <button
-              type="button"
-              onClick={limparFiltros}
-              className="px-3 py-2 rounded-lg border border-pk-border text-sm hover:bg-pk-gray transition-colors"
-            >
-              Limpar
-            </button>
-          )}
+          <div className="relative flex-1">
+            <Hash size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-pk-subtle" />
+            <input type="number" min="1" value={cartaIdSearch} onChange={(e) => setCartaIdSearch(e.target.value)} placeholder="ID da carta..."
+              className="w-full bg-pk-surface border border-pk-border rounded-lg pl-9 pr-3 py-2 text-sm text-pk-text placeholder:text-pk-subtle focus:outline-none focus:border-pk-red transition-colors" />
+          </div>
+          <button type="submit" className="bg-pk-surface-2 border border-pk-border px-4 py-2 rounded-lg text-sm text-pk-muted hover:text-pk-text transition-colors cursor-pointer">Por Carta</button>
+          {(artistaSearch || cartaIdSearch) && <button type="button" onClick={limpar} className="p-2 text-pk-muted hover:text-pk-text cursor-pointer"><X size={16} /></button>}
         </form>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-pk-border shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-400">Carregando...</div>
-        ) : detalhes.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">Nenhum detalhe encontrado.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-pk-blue text-white">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">ID</th>
-                <th className="px-4 py-3 text-left font-semibold">Carta</th>
-                <th className="px-4 py-3 text-left font-semibold">Raridade</th>
-                <th className="px-4 py-3 text-left font-semibold">Artista</th>
-                <th className="px-4 py-3 text-left font-semibold">Evolui De</th>
-                <th className="px-4 py-3 text-center font-semibold">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detalhes.map((d, i) => (
-                <tr key={d.id} className={i % 2 === 0 ? "bg-white" : "bg-pk-gray"}>
-                  <td className="px-4 py-3 text-gray-400 font-mono">{d.id}</td>
-                  <td className="px-4 py-3">
-                    {d.carta ? (
-                      <div>
-                        <p className="font-medium text-pk-blue">{d.carta.nome}</p>
-                        <p className="text-xs text-gray-400">ID: {d.carta.id}</p>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {d.raridade ? (
-                      <span className="bg-pk-yellow text-pk-blue font-bold px-2 py-0.5 rounded-full text-xs">
-                        {d.raridade}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 italic">
-                    {d.artista ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {d.evolucaoDe ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => openEdit(d)}
-                        className="px-3 py-1 bg-pk-blue text-white rounded text-xs font-medium hover:bg-pk-blue-light transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(d)}
-                        className="px-3 py-1 bg-pk-red text-white rounded text-xs font-medium hover:bg-pk-red-dark transition-colors"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
+      <div className="bg-pk-surface border border-pk-border rounded-xl overflow-hidden">
+        {loading ? <div className="p-10 text-center text-pk-subtle text-sm">Carregando...</div>
+          : detalhes.length === 0 ? <div className="p-10 text-center text-pk-subtle text-sm">Nenhum detalhe encontrado.</div>
+          : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-pk-border">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Carta</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Raridade</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Artista</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Evolui De</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-pk-subtle uppercase tracking-wider">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {detalhes.map((d) => (
+                  <tr key={d.id} className="border-b border-pk-border/50 hover:bg-pk-surface-2 transition-colors">
+                    <td className="px-4 py-3">
+                      {d.carta ? (
+                        <div>
+                          <p className="font-semibold text-pk-text text-sm">{d.carta.nome}</p>
+                          <p className="text-xs text-pk-subtle font-mono">ID: {d.carta.id}</p>
+                        </div>
+                      ) : <span className="text-pk-subtle">—</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      {d.raridade
+                        ? <span className="bg-pk-yellow/10 text-pk-yellow border border-pk-yellow/20 font-bold px-2 py-0.5 rounded-full text-xs font-mono">{d.raridade}</span>
+                        : <span className="text-pk-subtle">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-pk-muted text-xs italic">{d.artista ?? "—"}</td>
+                    <td className="px-4 py-3 text-pk-subtle text-xs">{d.evolucaoDe ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex gap-1.5 justify-end">
+                        <button onClick={() => { setForm({ raridade: d.raridade ?? "", artista: d.artista ?? "", descricao: d.descricao ?? "", evolucaoDe: d.evolucaoDe ?? "", cartaId: d.carta?.id?.toString() ?? "" }); setEditId(d.id); setView("edit"); }}
+                          className="p-1.5 rounded-lg text-pk-muted hover:text-pk-blue hover:bg-pk-surface-3 transition-colors cursor-pointer"><Pencil size={14} /></button>
+                        <button onClick={() => setDeleteTarget(d)}
+                          className="p-1.5 rounded-lg text-pk-muted hover:text-pk-red hover:bg-pk-surface-3 transition-colors cursor-pointer"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
       </div>
 
-      <Pagination
-        page={pageInfo.number}
-        totalPages={pageInfo.totalPages}
-        totalElements={pageInfo.totalElements}
-        onPage={(p) => load(p, artistaSearch)}
-      />
+      <Pagination page={pageInfo.number} totalPages={pageInfo.totalPages} totalElements={pageInfo.totalElements} onPage={(p) => load(p, artistaSearch)} />
 
-      {/* Create / Edit Modal */}
       {(view === "create" || view === "edit") && (
-        <Modal
-          title={view === "create" ? "Novo Detalhe Estatístico" : "Editar Detalhe"}
-          onClose={closeModal}
-        >
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Modal title={view === "create" ? "Novo Detalhe" : "Editar Detalhe"} onClose={() => setView("list")}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             {view === "create" && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ID da Carta <span className="text-pk-red">*</span>
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  required
-                  value={form.cartaId}
-                  onChange={(e) => setForm({ ...form, cartaId: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: 1"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Cada carta pode ter apenas um detalhe (1:1)
-                </p>
-              </div>
+              <Field label="ID da Carta" required hint="Cada carta pode ter apenas um detalhe (1:1)">
+                <Input type="number" min="1" required value={form.cartaId} onChange={(e) => setForm({ ...form, cartaId: e.target.value })} placeholder="ex: 1" />
+              </Field>
             )}
-
             {view === "edit" && form.cartaId && (
-              <div className="bg-pk-gray rounded-lg px-3 py-2 text-sm text-gray-600">
-                Carta ID: <strong>{form.cartaId}</strong> (não alterável)
+              <div className="bg-pk-surface-3 border border-pk-border rounded-lg px-3 py-2 text-xs text-pk-muted font-mono">
+                Carta ID: <span className="text-pk-text font-semibold">{form.cartaId}</span> · não alterável
               </div>
             )}
-
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Raridade</label>
-                <input
-                  type="text"
-                  value={form.raridade}
-                  onChange={(e) => setForm({ ...form, raridade: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: Rare Holo"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Artista</label>
-                <input
-                  type="text"
-                  value={form.artista}
-                  onChange={(e) => setForm({ ...form, artista: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: Mitsuhiro Arita"
-                />
-              </div>
+              <Field label="Raridade"><Input value={form.raridade} onChange={(e) => setForm({ ...form, raridade: e.target.value })} placeholder="ex: Rare Holo" /></Field>
+              <Field label="Artista"><Input value={form.artista} onChange={(e) => setForm({ ...form, artista: e.target.value })} placeholder="ex: Mitsuhiro Arita" /></Field>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Evolui De</label>
-              <input
-                type="text"
-                value={form.evolucaoDe}
-                onChange={(e) => setForm({ ...form, evolucaoDe: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="ex: Charmeleon"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Descrição (Flavor Text)
-              </label>
-              <textarea
-                rows={3}
-                value={form.descricao}
-                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red resize-none"
-                placeholder="ex: Spits fire that is hot enough to melt boulders."
-              />
-            </div>
-
+            <Field label="Evolui De"><Input value={form.evolucaoDe} onChange={(e) => setForm({ ...form, evolucaoDe: e.target.value })} placeholder="ex: Charmeleon" /></Field>
+            <Field label="Descrição (Flavor Text)">
+              <Textarea rows={3} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} placeholder="ex: Spits fire that is hot enough to melt boulders." />
+            </Field>
             <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors disabled:opacity-60"
-              >
-                {saving ? "Salvando..." : view === "create" ? "Criar Detalhe" : "Salvar Alterações"}
-              </button>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 border border-pk-border rounded-lg text-sm hover:bg-pk-gray transition-colors"
-              >
-                Cancelar
-              </button>
+              <button type="submit" disabled={saving} className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-60 cursor-pointer">{saving ? "Salvando..." : view === "create" ? "Criar" : "Salvar"}</button>
+              <button type="button" onClick={() => setView("list")} className="px-4 border border-pk-border rounded-lg text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 cursor-pointer">Cancelar</button>
             </div>
           </form>
         </Modal>
       )}
 
-      {/* Delete Confirm */}
       {deleteTarget && (
-        <Modal title="Confirmar Exclusão" onClose={() => setDeleteTarget(null)}>
-          <p className="text-gray-700 mb-4">
-            Deseja excluir o detalhe da carta{" "}
-            <strong>"{deleteTarget.carta?.nome ?? `ID ${deleteTarget.id}`}"</strong>?
-          </p>
+        <Modal title="Confirmar exclusão" onClose={() => setDeleteTarget(null)}>
+          <p className="text-pk-muted text-sm mb-5">Excluir detalhe de <span className="font-semibold text-pk-text">"{deleteTarget.carta?.nome ?? `ID ${deleteTarget.id}`}"</span>?</p>
           <div className="flex gap-3">
-            <button
-              onClick={() => handleDelete(deleteTarget)}
-              className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors"
-            >
-              Excluir
-            </button>
-            <button
-              onClick={() => setDeleteTarget(null)}
-              className="flex-1 border border-pk-border rounded-lg py-2 text-sm hover:bg-pk-gray transition-colors"
-            >
-              Cancelar
-            </button>
+            <button onClick={() => handleDelete(deleteTarget)} className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg text-sm cursor-pointer">Excluir</button>
+            <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-pk-border rounded-lg py-2.5 text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 cursor-pointer">Cancelar</button>
           </div>
         </Modal>
       )}
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

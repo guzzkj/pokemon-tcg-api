@@ -6,46 +6,23 @@ import { Carta, Colecao, PagedResponse, ApiError } from "@/lib/types";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import Toast from "@/components/Toast";
+import { Field, Input, Select } from "@/components/Field";
+import { CreditCard, Plus, Search, X, Pencil, Trash2, Filter } from "lucide-react";
 
 type View = "list" | "create" | "edit";
 type Categoria = "POKEMON" | "TREINADOR" | "ENERGIA";
 
-interface CartaForm {
-  nome: string;
-  categoria: Categoria;
-  pontosDeVida: string;
-  imagemUrl: string;
-  idExterno: string;
-  numeroLocal: string;
-  colecaoId: string;
-}
-
-const emptyForm: CartaForm = {
-  nome: "",
-  categoria: "POKEMON",
-  pontosDeVida: "",
-  imagemUrl: "",
-  idExterno: "",
-  numeroLocal: "",
-  colecaoId: "",
-};
+interface CartaForm { nome: string; categoria: Categoria; pontosDeVida: string; imagemUrl: string; idExterno: string; numeroLocal: string; colecaoId: string; }
+const emptyForm: CartaForm = { nome: "", categoria: "POKEMON", pontosDeVida: "", imagemUrl: "", idExterno: "", numeroLocal: "", colecaoId: "" };
 
 const categoriaBadge: Record<Categoria, string> = {
-  POKEMON: "bg-pk-red text-white",
-  TREINADOR: "bg-pk-blue text-white",
-  ENERGIA: "bg-pk-yellow text-pk-blue",
+  POKEMON: "bg-pk-red/10 text-pk-red border border-pk-red/20",
+  TREINADOR: "bg-pk-blue/10 text-pk-blue border border-pk-blue/20",
+  ENERGIA: "bg-pk-yellow/10 text-pk-yellow border border-pk-yellow/20",
 };
 
-function toPayload(form: CartaForm) {
-  return {
-    nome: form.nome,
-    categoria: form.categoria,
-    pontosDeVida: form.pontosDeVida ? parseInt(form.pontosDeVida) : undefined,
-    imagemUrl: form.imagemUrl || undefined,
-    idExterno: form.idExterno || undefined,
-    numeroLocal: form.numeroLocal || undefined,
-    colecao: form.colecaoId ? { id: parseInt(form.colecaoId) } : undefined,
-  };
+function toPayload(f: CartaForm) {
+  return { nome: f.nome, categoria: f.categoria, pontosDeVida: f.pontosDeVida ? parseInt(f.pontosDeVida) : undefined, imagemUrl: f.imagemUrl || undefined, idExterno: f.idExterno || undefined, numeroLocal: f.numeroLocal || undefined, colecao: f.colecaoId ? { id: parseInt(f.colecaoId) } : undefined };
 }
 
 export default function CartasPage() {
@@ -63,421 +40,170 @@ export default function CartasPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Carta | null>(null);
 
-  const loadColecoes = useCallback(async () => {
-    try {
-      const data = await get<PagedResponse<Colecao>>("/colecoes?size=200");
-      setColecoes(extractList(data, "colecaoList"));
-    } catch {
-      // non-critical
-    }
-  }, []);
-
   const load = useCallback(async (page = 0, nome = "", colecaoId = "") => {
     setLoading(true);
     try {
-      let path: string;
-      if (colecaoId) {
-        path = `/colecoes/${colecaoId}/cartas?page=${page}&size=10`;
-      } else if (nome) {
-        path = `/cartas/buscar?nome=${encodeURIComponent(nome)}&page=${page}&size=10`;
-      } else {
-        path = `/cartas?page=${page}&size=10`;
-      }
+      const path = colecaoId ? `/colecoes/${colecaoId}/cartas?page=${page}&size=10`
+        : nome ? `/cartas/buscar?nome=${encodeURIComponent(nome)}&page=${page}&size=10`
+        : `/cartas?page=${page}&size=10`;
       const data = await get<PagedResponse<Carta>>(path);
       setCartas(extractList(data, "cartaList"));
-      setPageInfo({
-        number: data.page.number,
-        totalPages: data.page.totalPages,
-        totalElements: data.page.totalElements,
-      });
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao carregar cartas", type: "error" });
-    } finally {
-      setLoading(false);
-    }
+      setPageInfo({ number: data.page.number, totalPages: data.page.totalPages, totalElements: data.page.totalElements });
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro ao carregar", type: "error" }); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => {
     load(0, search, filterColecao);
-    loadColecoes();
-  }, [load, loadColecoes, search, filterColecao]);
-
-  function openCreate() {
-    setForm(emptyForm);
-    setEditId(null);
-    setView("create");
-  }
-
-  function openEdit(c: Carta) {
-    setForm({
-      nome: c.nome,
-      categoria: c.categoria,
-      pontosDeVida: c.pontosDeVida?.toString() ?? "",
-      imagemUrl: c.imagemUrl ?? "",
-      idExterno: c.idExterno ?? "",
-      numeroLocal: c.numeroLocal ?? "",
-      colecaoId: c.colecao?.id?.toString() ?? "",
-    });
-    setEditId(c.id);
-    setView("edit");
-  }
-
-  function closeModal() {
-    setView("list");
-  }
+    get<PagedResponse<Colecao>>("/colecoes?size=200").then((d) => setColecoes(extractList(d, "colecaoList"))).catch(() => {});
+  }, [load, search, filterColecao]);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+    e.preventDefault(); setSaving(true);
     try {
-      const payload = toPayload(form);
-      if (view === "create") {
-        await post("/cartas", payload);
-        setToast({ message: "Carta criada com sucesso!", type: "success" });
-      } else {
-        await put(`/cartas/${editId}`, payload);
-        setToast({ message: "Carta atualizada com sucesso!", type: "success" });
-      }
-      closeModal();
-      load(pageInfo.number, search, filterColecao);
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao salvar", type: "error" });
-    } finally {
-      setSaving(false);
-    }
+      if (view === "create") { await post("/cartas", toPayload(form)); setToast({ message: "Carta criada!", type: "success" }); }
+      else { await put(`/cartas/${editId}`, toPayload(form)); setToast({ message: "Carta atualizada!", type: "success" }); }
+      setView("list"); load(pageInfo.number, search, filterColecao);
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro", type: "error" }); }
+    finally { setSaving(false); }
   }
 
   async function handleDelete(c: Carta) {
-    try {
-      await del(`/cartas/${c.id}`);
-      setToast({ message: `Carta "${c.nome}" removida.`, type: "success" });
-      setDeleteTarget(null);
-      load(pageInfo.number, search, filterColecao);
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao deletar", type: "error" });
-      setDeleteTarget(null);
-    }
-  }
-
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setFilterColecao("");
-    setSearch(searchInput);
-  }
-
-  function handleColecaoFilter(id: string) {
-    setFilterColecao(id);
-    setSearch("");
-    setSearchInput("");
+    try { await del(`/cartas/${c.id}`); setToast({ message: `"${c.nome}" removida.`, type: "success" }); setDeleteTarget(null); load(pageInfo.number, search, filterColecao); }
+    catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro", type: "error" }); setDeleteTarget(null); }
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-pk-blue">🃏 Cartas</h1>
-          <p className="text-gray-500 text-sm">CRUD completo de cartas do TCG</p>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-pk-surface-2 border border-pk-border rounded-lg flex items-center justify-center">
+            <CreditCard size={18} className="text-pk-yellow" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-pk-text">Cartas</h1>
+            <p className="text-pk-subtle text-xs">CRUD completo de cartas</p>
+          </div>
         </div>
-        <button
-          onClick={openCreate}
-          className="bg-pk-red hover:bg-pk-red-dark text-white font-bold px-4 py-2 rounded-lg transition-colors"
-        >
-          + Nova Carta
+        <button onClick={() => { setForm(emptyForm); setEditId(null); setView("create"); }}
+          className="flex items-center gap-2 bg-pk-red hover:bg-pk-red-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer">
+          <Plus size={16} /> Nova Carta
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-2 mb-4">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar por nome (mín. 2 chars)..."
-            className="flex-1 border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-          />
-          <button
-            type="submit"
-            className="bg-pk-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pk-blue-light transition-colors"
-          >
-            Buscar
-          </button>
-          {(search || filterColecao) && (
-            <button
-              type="button"
-              onClick={() => { setSearch(""); setSearchInput(""); setFilterColecao(""); }}
-              className="px-3 py-2 rounded-lg border border-pk-border text-sm hover:bg-pk-gray transition-colors"
-            >
-              Limpar
-            </button>
-          )}
+      <div className="flex flex-col md:flex-row gap-2">
+        <form onSubmit={(e) => { e.preventDefault(); setFilterColecao(""); setSearch(searchInput); }} className="flex gap-2 flex-1">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-pk-subtle" />
+            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Buscar por nome (mín. 2 chars)..."
+              className="w-full bg-pk-surface border border-pk-border rounded-lg pl-9 pr-3 py-2 text-sm text-pk-text placeholder:text-pk-subtle focus:outline-none focus:border-pk-red transition-colors" />
+          </div>
+          <button type="submit" className="bg-pk-surface-2 border border-pk-border px-4 py-2 rounded-lg text-sm text-pk-muted hover:text-pk-text transition-colors cursor-pointer">Buscar</button>
+          {(search || filterColecao) && <button type="button" onClick={() => { setSearch(""); setSearchInput(""); setFilterColecao(""); }} className="p-2 text-pk-muted hover:text-pk-text cursor-pointer"><X size={16} /></button>}
         </form>
-        <select
-          value={filterColecao}
-          onChange={(e) => handleColecaoFilter(e.target.value)}
-          className="border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red bg-white md:w-56"
-        >
-          <option value="">Filtrar por coleção...</option>
-          {colecoes.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.nome}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <Filter size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-pk-subtle pointer-events-none" />
+          <select value={filterColecao} onChange={(e) => { setFilterColecao(e.target.value); setSearch(""); setSearchInput(""); }}
+            className="bg-pk-surface border border-pk-border rounded-lg pl-9 pr-3 py-2 text-sm text-pk-muted focus:outline-none focus:border-pk-red cursor-pointer md:w-52">
+            <option value="">Todas as coleções</option>
+            {colecoes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </select>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-pk-border shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-400">Carregando...</div>
-        ) : cartas.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">Nenhuma carta encontrada.</div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-pk-blue text-white">
-              <tr>
-                <th className="px-3 py-3 text-left font-semibold w-12">Img</th>
-                <th className="px-3 py-3 text-left font-semibold">Nome</th>
-                <th className="px-3 py-3 text-left font-semibold">Categoria</th>
-                <th className="px-3 py-3 text-left font-semibold">HP</th>
-                <th className="px-3 py-3 text-left font-semibold">Coleção</th>
-                <th className="px-3 py-3 text-left font-semibold">Nº</th>
-                <th className="px-3 py-3 text-center font-semibold">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cartas.map((c, i) => (
-                <tr key={c.id} className={i % 2 === 0 ? "bg-white" : "bg-pk-gray"}>
-                  <td className="px-3 py-2">
-                    {c.imagemUrl ? (
-                      <img
-                        src={c.imagemUrl}
-                        alt={c.nome}
-                        className="h-10 w-7 object-cover rounded"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <div className="h-10 w-7 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xs">
-                        ?
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-3 py-2 font-medium text-pk-blue">{c.nome}</td>
-                  <td className="px-3 py-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${categoriaBadge[c.categoria]}`}>
-                      {c.categoria}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-gray-600">
-                    {c.pontosDeVida != null ? `${c.pontosDeVida} HP` : "—"}
-                  </td>
-                  <td className="px-3 py-2 text-gray-500 text-xs">
-                    {c.colecao?.nome ?? "—"}
-                  </td>
-                  <td className="px-3 py-2 text-gray-400 font-mono text-xs">
-                    {c.numeroLocal ?? "—"}
-                  </td>
-                  <td className="px-3 py-2 text-center">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => openEdit(c)}
-                        className="px-3 py-1 bg-pk-blue text-white rounded text-xs font-medium hover:bg-pk-blue-light transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(c)}
-                        className="px-3 py-1 bg-pk-red text-white rounded text-xs font-medium hover:bg-pk-red-dark transition-colors"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </td>
+      <div className="bg-pk-surface border border-pk-border rounded-xl overflow-hidden">
+        {loading ? <div className="p-10 text-center text-pk-subtle text-sm">Carregando...</div>
+          : cartas.length === 0 ? <div className="p-10 text-center text-pk-subtle text-sm">Nenhuma carta encontrada.</div>
+          : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-pk-border">
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider w-12">Img</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Nome</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Categoria</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">HP</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Coleção</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Nº</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold text-pk-subtle uppercase tracking-wider">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              </thead>
+              <tbody>
+                {cartas.map((c) => (
+                  <tr key={c.id} className="border-b border-pk-border/50 hover:bg-pk-surface-2 transition-colors">
+                    <td className="px-3 py-2">
+                      {c.imagemUrl
+                        ? <img src={c.imagemUrl} alt={c.nome} className="h-10 w-7 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        : <div className="h-10 w-7 bg-pk-surface-3 rounded flex items-center justify-center text-pk-subtle text-xs">?</div>}
+                    </td>
+                    <td className="px-3 py-2 font-semibold text-pk-text">{c.nome}</td>
+                    <td className="px-3 py-2"><span className={`px-2 py-0.5 rounded-full text-xs font-bold font-mono ${categoriaBadge[c.categoria]}`}>{c.categoria}</span></td>
+                    <td className="px-3 py-2 text-pk-muted text-xs font-mono">{c.pontosDeVida != null ? `${c.pontosDeVida} HP` : "—"}</td>
+                    <td className="px-3 py-2 text-pk-subtle text-xs">{c.colecao?.nome ?? "—"}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-pk-subtle">{c.numeroLocal ?? "—"}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex gap-1.5 justify-end">
+                        <button onClick={() => { setForm({ nome: c.nome, categoria: c.categoria, pontosDeVida: c.pontosDeVida?.toString() ?? "", imagemUrl: c.imagemUrl ?? "", idExterno: c.idExterno ?? "", numeroLocal: c.numeroLocal ?? "", colecaoId: c.colecao?.id?.toString() ?? "" }); setEditId(c.id); setView("edit"); }}
+                          className="p-1.5 rounded-lg text-pk-muted hover:text-pk-blue hover:bg-pk-surface-3 transition-colors cursor-pointer"><Pencil size={14} /></button>
+                        <button onClick={() => setDeleteTarget(c)}
+                          className="p-1.5 rounded-lg text-pk-muted hover:text-pk-red hover:bg-pk-surface-3 transition-colors cursor-pointer"><Trash2 size={14} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
       </div>
 
-      <Pagination
-        page={pageInfo.number}
-        totalPages={pageInfo.totalPages}
-        totalElements={pageInfo.totalElements}
-        onPage={(p) => load(p, search, filterColecao)}
-      />
+      <Pagination page={pageInfo.number} totalPages={pageInfo.totalPages} totalElements={pageInfo.totalElements} onPage={(p) => load(p, search, filterColecao)} />
 
-      {/* Create / Edit Modal */}
       {(view === "create" || view === "edit") && (
-        <Modal
-          title={view === "create" ? "Nova Carta" : "Editar Carta"}
-          onClose={closeModal}
-        >
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Nome <span className="text-pk-red">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="ex: Charizard"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Categoria <span className="text-pk-red">*</span>
-              </label>
-              <select
-                required
-                value={form.categoria}
-                onChange={(e) => setForm({ ...form, categoria: e.target.value as Categoria })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red bg-white"
-              >
+        <Modal title={view === "create" ? "Nova Carta" : "Editar Carta"} onClose={() => setView("list")}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field label="Nome" required><Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="ex: Charizard" /></Field>
+            <Field label="Categoria" required>
+              <Select required value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value as Categoria })}>
                 <option value="POKEMON">POKEMON</option>
                 <option value="TREINADOR">TREINADOR</option>
                 <option value="ENERGIA">ENERGIA</option>
-              </select>
-            </div>
-
+              </Select>
+            </Field>
             {form.categoria === "POKEMON" && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Pontos de Vida (HP)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="999"
-                  value={form.pontosDeVida}
-                  onChange={(e) => setForm({ ...form, pontosDeVida: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: 120"
-                />
-              </div>
+              <Field label="Pontos de Vida (HP)"><Input type="number" min="0" max="999" value={form.pontosDeVida} onChange={(e) => setForm({ ...form, pontosDeVida: e.target.value })} placeholder="ex: 120" /></Field>
             )}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Coleção
-              </label>
-              <select
-                value={form.colecaoId}
-                onChange={(e) => setForm({ ...form, colecaoId: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red bg-white"
-              >
+            <Field label="Coleção">
+              <Select value={form.colecaoId} onChange={(e) => setForm({ ...form, colecaoId: e.target.value })}>
                 <option value="">— sem coleção —</option>
-                {colecoes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+                {colecoes.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </Select>
+            </Field>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Número Local
-                </label>
-                <input
-                  type="text"
-                  value={form.numeroLocal}
-                  onChange={(e) => setForm({ ...form, numeroLocal: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: 4"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ID Externo
-                </label>
-                <input
-                  type="text"
-                  value={form.idExterno}
-                  onChange={(e) => setForm({ ...form, idExterno: e.target.value })}
-                  className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                  placeholder="ex: base1-4"
-                />
-              </div>
+              <Field label="Número Local"><Input value={form.numeroLocal} onChange={(e) => setForm({ ...form, numeroLocal: e.target.value })} placeholder="ex: 4" /></Field>
+              <Field label="ID Externo"><Input value={form.idExterno} onChange={(e) => setForm({ ...form, idExterno: e.target.value })} placeholder="ex: base1-4" /></Field>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                URL da Imagem
-              </label>
-              <input
-                type="url"
-                value={form.imagemUrl}
-                onChange={(e) => setForm({ ...form, imagemUrl: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="https://..."
-              />
-              {form.imagemUrl && (
-                <img
-                  src={form.imagemUrl}
-                  alt="preview"
-                  className="mt-2 h-24 object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              )}
-            </div>
-
+            <Field label="URL da Imagem">
+              <Input type="url" value={form.imagemUrl} onChange={(e) => setForm({ ...form, imagemUrl: e.target.value })} placeholder="https://..." />
+              {form.imagemUrl && <img src={form.imagemUrl} alt="preview" className="mt-2 h-20 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+            </Field>
             <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors disabled:opacity-60"
-              >
-                {saving ? "Salvando..." : view === "create" ? "Criar Carta" : "Salvar Alterações"}
-              </button>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 border border-pk-border rounded-lg text-sm hover:bg-pk-gray transition-colors"
-              >
-                Cancelar
-              </button>
+              <button type="submit" disabled={saving} className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-60 cursor-pointer">{saving ? "Salvando..." : view === "create" ? "Criar" : "Salvar"}</button>
+              <button type="button" onClick={() => setView("list")} className="px-4 border border-pk-border rounded-lg text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 cursor-pointer">Cancelar</button>
             </div>
           </form>
         </Modal>
       )}
 
-      {/* Delete Confirm */}
       {deleteTarget && (
-        <Modal title="Confirmar Exclusão" onClose={() => setDeleteTarget(null)}>
-          <p className="text-gray-700 mb-4">
-            Deseja excluir a carta <strong>"{deleteTarget.nome}"</strong>?
-            Esta ação não pode ser desfeita.
-          </p>
+        <Modal title="Confirmar exclusão" onClose={() => setDeleteTarget(null)}>
+          <p className="text-pk-muted text-sm mb-5">Excluir <span className="font-semibold text-pk-text">"{deleteTarget.nome}"</span>?</p>
           <div className="flex gap-3">
-            <button
-              onClick={() => handleDelete(deleteTarget)}
-              className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors"
-            >
-              Excluir
-            </button>
-            <button
-              onClick={() => setDeleteTarget(null)}
-              className="flex-1 border border-pk-border rounded-lg py-2 text-sm hover:bg-pk-gray transition-colors"
-            >
-              Cancelar
-            </button>
+            <button onClick={() => handleDelete(deleteTarget)} className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg text-sm cursor-pointer">Excluir</button>
+            <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-pk-border rounded-lg py-2.5 text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 cursor-pointer">Cancelar</button>
           </div>
         </Modal>
       )}
 
-      {toast && (
-        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

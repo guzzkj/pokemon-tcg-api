@@ -1,27 +1,28 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Pokémon TCG API",
-  description: "Interface de gerenciamento da Pokémon TCG API",
+  title: "Pokémon TCG Admin",
+  description: "Painel administrativo da Pokémon TCG API",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 container mx-auto px-4 py-6 max-w-6xl">
-          {children}
-        </main>
-        <footer className="bg-pk-blue text-white text-center py-3 text-sm">
-          Pokémon TCG API — Senac TSI
-        </footer>
+      <body className="bg-pk-bg text-pk-text min-h-screen">
+        <Sidebar />
+        {/* Content shifted right on desktop for sidebar */}
+        <div className="lg:pl-60 flex flex-col min-h-screen">
+          {/* Top bar spacer on mobile */}
+          <div className="lg:hidden h-14" />
+          <main className="flex-1 p-4 md:p-6 max-w-[1400px] w-full mx-auto">
+            {children}
+          </main>
+          <footer className="px-6 py-3 border-t border-pk-border text-pk-subtle text-xs text-center">
+            Pokémon TCG API — SENAC TSI
+          </footer>
+        </div>
       </body>
     </html>
   );

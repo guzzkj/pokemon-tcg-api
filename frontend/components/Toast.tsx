@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { CheckCircle, XCircle, X } from "lucide-react";
 
 interface Props {
   message: string;
@@ -14,19 +15,30 @@ export default function Toast({ message, type, onClose }: Props) {
     return () => clearTimeout(t);
   }, [onClose]);
 
+  const isSuccess = type === "success";
+
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 px-5 py-3 rounded-lg shadow-lg text-white font-medium max-w-sm ${
-        type === "success" ? "bg-green-600" : "bg-pk-red"
-      }`}
+      role="status"
+      aria-live="polite"
+      className={`fixed bottom-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border max-w-sm
+        ${isSuccess
+          ? "bg-pk-surface border-pk-success/30 text-pk-text"
+          : "bg-pk-surface border-pk-red/30 text-pk-text"
+        }`}
     >
-      <div className="flex items-center gap-3">
-        <span>{type === "success" ? "✓" : "✕"}</span>
-        <span>{message}</span>
-        <button onClick={onClose} className="ml-auto opacity-75 hover:opacity-100">
-          ×
-        </button>
-      </div>
+      {isSuccess
+        ? <CheckCircle size={18} className="text-pk-success flex-shrink-0" />
+        : <XCircle size={18} className="text-pk-red flex-shrink-0" />
+      }
+      <span className="text-sm font-medium flex-1">{message}</span>
+      <button
+        onClick={onClose}
+        className="p-1 text-pk-muted hover:text-pk-text transition-colors cursor-pointer flex-shrink-0"
+        aria-label="Fechar notificação"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }

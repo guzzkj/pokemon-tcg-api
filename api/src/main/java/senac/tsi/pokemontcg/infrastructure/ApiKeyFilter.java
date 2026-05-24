@@ -1,6 +1,5 @@
 package senac.tsi.pokemontcg.infrastructure;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import senac.tsi.pokemontcg.exceptions.ErrorResponse;
 import senac.tsi.pokemontcg.services.ApiKeyService;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Set;
@@ -27,12 +27,11 @@ public class ApiKeyFilter extends OncePerRequestFilter {
     );
 
     private final ApiKeyService apiKeyService;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    public ApiKeyFilter(ApiKeyService apiKeyService, ObjectMapper objectMapper) {
+    public ApiKeyFilter(ApiKeyService apiKeyService) {
         this.apiKeyService = apiKeyService;
-        this.objectMapper = objectMapper;
     }
 
     @Override

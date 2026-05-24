@@ -26,7 +26,8 @@ import senac.tsi.pokemontcg.tcgdex.dto.TcgdexColecaoResumidaDto;
 
 import java.util.List;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
  * Controller que expõe endpoints para consumir a API externa TCGdex.
@@ -82,8 +83,7 @@ public class TcgdexController {
         Page<TcgdexCartaResumidaDto> page = new PageImpl<>(paginaAtual, pageable, todas.size());
         PagedModel<EntityModel<TcgdexCartaResumidaDto>> pagedModel = cartaPagedAssembler.toModel(page,
                 carta -> EntityModel.of(carta,
-                        linkTo(methodOn(TcgdexController.class).buscarCartaPorId(carta.id())).withSelfRel(),
-                        linkTo(methodOn(CartaController.class).importarDaTcgdex(carta.id())).withRel("importar")));
+                        linkTo(methodOn(TcgdexController.class).buscarCartaPorId(carta.id())).withSelfRel()));
         return ResponseEntity.ok(pagedModel);
     }
 
@@ -105,8 +105,7 @@ public class TcgdexController {
         TcgdexCartaDto carta = tcgdexClient.buscarCartaPorId(id);
         EntityModel<TcgdexCartaDto> model = EntityModel.of(carta,
                 linkTo(methodOn(TcgdexController.class).buscarCartaPorId(id)).withSelfRel(),
-                linkTo(methodOn(TcgdexController.class).listarCartas(Pageable.unpaged())).withRel("listar_todas"),
-                linkTo(methodOn(CartaController.class).importarDaTcgdex(id)).withRel("importar_para_banco"));
+                linkTo(methodOn(TcgdexController.class).listarCartas(Pageable.unpaged())).withRel("listar_todas"));
         return ResponseEntity.ok(model);
     }
 
@@ -188,8 +187,7 @@ public class TcgdexController {
         Page<TcgdexCartaResumidaDto> page = new PageImpl<>(paginaAtual, pageable, filtradas.size());
         PagedModel<EntityModel<TcgdexCartaResumidaDto>> pagedModel = cartaPagedAssembler.toModel(page,
                 carta -> EntityModel.of(carta,
-                        linkTo(methodOn(TcgdexController.class).buscarCartaPorId(carta.id())).withSelfRel(),
-                        linkTo(methodOn(CartaController.class).importarDaTcgdex(carta.id())).withRel("importar")));
+                        linkTo(methodOn(TcgdexController.class).buscarCartaPorId(carta.id())).withSelfRel()));
         return ResponseEntity.ok(pagedModel);
     }
 }

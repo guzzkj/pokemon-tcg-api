@@ -1,23 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-pk-red: #cc0000;
-  --color-pk-red-dark: #990000;
-  --color-pk-yellow: #ffcb05;
-  --color-pk-yellow-dark: #e6b700;
-  --color-pk-blue: #003a70;
-  --color-pk-blue-light: #1a5fa8;
-  --color-pk-gray: #f5f5f5;
-  --color-pk-border: #e0e0e0;
-  --font-sans: "Segoe UI", system-ui, sans-serif;
+  /* Brand */
+  --color-pk-red:        #dc2626;
+  --color-pk-red-dark:   #b91c1c;
+  --color-pk-red-light:  #ef4444;
+  --color-pk-yellow:     #fbbf24;
+  --color-pk-yellow-dark:#f59e0b;
+  --color-pk-blue:       #3b82f6;
+  --color-pk-blue-dark:  #2563eb;
+
+  /* Dark surfaces */
+  --color-pk-bg:         #0f1117;
+  --color-pk-surface:    #1a1f2e;
+  --color-pk-surface-2:  #242938;
+  --color-pk-surface-3:  #2d3347;
+  --color-pk-border:     #2d3347;
+  --color-pk-border-2:   #3d4560;
+
+  /* Text */
+  --color-pk-text:       #f1f5f9;
+  --color-pk-muted:      #94a3b8;
+  --color-pk-subtle:     #64748b;
+
+  /* Status */
+  --color-pk-success:    #22c55e;
+  --color-pk-warning:    #fbbf24;
+  --color-pk-danger:     #ef4444;
+
+  --font-sans: 'Fira Sans', system-ui, sans-serif;
+  --font-mono: 'Fira Code', monospace;
 }
+
+* { box-sizing: border-box; }
+
+html { font-size: 16px; }
 
 body {
-  background-color: var(--color-pk-gray);
-  color: #1a1a1a;
-  font-family: var(--font-sans);
+  background-color: #0f1117;
+  color: #f1f5f9;
+  font-family: 'Fira Sans', system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-* {
-  box-sizing: border-box;
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #1a1f2e; }
+::-webkit-scrollbar-thumb { background: #3d4560; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #dc2626; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection { background: #dc262640; color: #f1f5f9; }
+
+/* Pokéball shimmer for loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #1a1f2e 25%, #242938 50%, #1a1f2e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }

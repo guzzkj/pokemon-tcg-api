@@ -6,17 +6,18 @@ import { Serie, PagedResponse, ApiError } from "@/lib/types";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import Toast from "@/components/Toast";
+import { Field, Input } from "@/components/Field";
+import { BookMarked, Plus, Search, X, Pencil, Trash2 } from "lucide-react";
 
 type View = "list" | "create" | "edit";
-
-const empty: Omit<Serie, "id"> = { nome: "", idExterno: "", logoUrl: "" };
+const empty = { nome: "", idExterno: "", logoUrl: "" };
 
 export default function SeriesPage() {
   const [series, setSeries] = useState<Serie[]>([]);
   const [pageInfo, setPageInfo] = useState({ number: 0, totalPages: 0, totalElements: 0 });
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<View>("list");
-  const [form, setForm] = useState<Omit<Serie, "id">>(empty);
+  const [form, setForm] = useState(empty);
   const [editId, setEditId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -32,173 +33,122 @@ export default function SeriesPage() {
         : `/series?page=${page}&size=10`;
       const data = await get<PagedResponse<Serie>>(path);
       setSeries(extractList(data, "serieList"));
-      setPageInfo({
-        number: data.page.number,
-        totalPages: data.page.totalPages,
-        totalElements: data.page.totalElements,
-      });
+      setPageInfo({ number: data.page.number, totalPages: data.page.totalPages, totalElements: data.page.totalElements });
     } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao carregar séries", type: "error" });
-    } finally {
-      setLoading(false);
-    }
+      setToast({ message: (e as ApiError).mensagem ?? "Erro ao carregar", type: "error" });
+    } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => {
-    load(0, search);
-  }, [load, search]);
-
-  function openCreate() {
-    setForm(empty);
-    setEditId(null);
-    setView("create");
-  }
-
-  function openEdit(s: Serie) {
-    setForm({ nome: s.nome, idExterno: s.idExterno ?? "", logoUrl: s.logoUrl ?? "" });
-    setEditId(s.id);
-    setView("edit");
-  }
-
-  function closeModal() {
-    setView("list");
-  }
+  useEffect(() => { load(0, search); }, [load, search]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     try {
-      if (view === "create") {
-        await post("/series", form);
-        setToast({ message: "Série criada com sucesso!", type: "success" });
-      } else {
-        await put(`/series/${editId}`, form);
-        setToast({ message: "Série atualizada com sucesso!", type: "success" });
-      }
-      closeModal();
+      if (view === "create") { await post("/series", form); setToast({ message: "Série criada!", type: "success" }); }
+      else { await put(`/series/${editId}`, form); setToast({ message: "Série atualizada!", type: "success" }); }
+      setView("list");
       load(pageInfo.number, search);
-    } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao salvar", type: "error" });
-    } finally {
-      setSaving(false);
-    }
+    } catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro ao salvar", type: "error" }); }
+    finally { setSaving(false); }
   }
 
   async function handleDelete(s: Serie) {
     try {
       await del(`/series/${s.id}`);
-      setToast({ message: `Série "${s.nome}" removida.`, type: "success" });
+      setToast({ message: `"${s.nome}" removida.`, type: "success" });
       setDeleteTarget(null);
       load(pageInfo.number, search);
     } catch (e) {
-      const err = e as ApiError;
-      setToast({ message: err.mensagem ?? "Erro ao deletar", type: "error" });
+      setToast({ message: (e as ApiError).mensagem ?? "Erro ao deletar", type: "error" });
       setDeleteTarget(null);
     }
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    setSearch(searchInput);
-  }
-
   return (
-    <div>
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-pk-blue">📚 Séries</h1>
-          <p className="text-gray-500 text-sm">Gerenciar séries do Pokémon TCG</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-pk-surface-2 border border-pk-border rounded-lg flex items-center justify-center">
+            <BookMarked size={18} className="text-pk-red" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-pk-text">Séries</h1>
+            <p className="text-pk-subtle text-xs">Gerenciar séries do Pokémon TCG</p>
+          </div>
         </div>
         <button
-          onClick={openCreate}
-          className="bg-pk-red hover:bg-pk-red-dark text-white font-bold px-4 py-2 rounded-lg transition-colors"
+          onClick={() => { setForm(empty); setEditId(null); setView("create"); }}
+          className="flex items-center gap-2 bg-pk-red hover:bg-pk-red-dark text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm cursor-pointer"
         >
-          + Nova Série
+          <Plus size={16} />
+          Nova Série
         </button>
       </div>
 
       {/* Search */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Buscar por nome..."
-          className="flex-1 border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-        />
-        <button
-          type="submit"
-          className="bg-pk-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-pk-blue-light transition-colors"
-        >
+      <form onSubmit={(e) => { e.preventDefault(); setSearch(searchInput); }} className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-pk-subtle" />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar por nome..."
+            className="w-full bg-pk-surface border border-pk-border rounded-lg pl-9 pr-3 py-2 text-sm text-pk-text placeholder:text-pk-subtle focus:outline-none focus:border-pk-red transition-colors"
+          />
+        </div>
+        <button type="submit" className="bg-pk-surface-2 border border-pk-border px-4 py-2 rounded-lg text-sm text-pk-muted hover:text-pk-text hover:border-pk-border-2 transition-colors cursor-pointer">
           Buscar
         </button>
         {search && (
-          <button
-            type="button"
-            onClick={() => { setSearch(""); setSearchInput(""); }}
-            className="px-3 py-2 rounded-lg border border-pk-border text-sm hover:bg-pk-gray transition-colors"
-          >
-            Limpar
+          <button type="button" onClick={() => { setSearch(""); setSearchInput(""); }}
+            className="p-2 text-pk-muted hover:text-pk-text transition-colors cursor-pointer">
+            <X size={16} />
           </button>
         )}
       </form>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-pk-border shadow-sm overflow-hidden">
+      <div className="bg-pk-surface border border-pk-border rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Carregando...</div>
+          <div className="p-10 text-center text-pk-subtle text-sm">Carregando...</div>
         ) : series.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            {search ? `Nenhuma série encontrada para "${search}"` : "Nenhuma série cadastrada."}
+          <div className="p-10 text-center text-pk-subtle text-sm">
+            {search ? `Nenhuma série para "${search}"` : "Nenhuma série cadastrada."}
           </div>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-pk-blue text-white">
-              <tr>
-                <th className="px-4 py-3 text-left font-semibold">ID</th>
-                <th className="px-4 py-3 text-left font-semibold">Nome</th>
-                <th className="px-4 py-3 text-left font-semibold">ID Externo</th>
-                <th className="px-4 py-3 text-left font-semibold">Logo</th>
-                <th className="px-4 py-3 text-center font-semibold">Ações</th>
+            <thead>
+              <tr className="border-b border-pk-border">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider w-16">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Nome</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">ID Externo</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-pk-subtle uppercase tracking-wider">Logo</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-pk-subtle uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {series.map((s, i) => (
-                <tr
-                  key={s.id}
-                  className={i % 2 === 0 ? "bg-white" : "bg-pk-gray"}
-                >
-                  <td className="px-4 py-3 text-gray-400 font-mono">{s.id}</td>
-                  <td className="px-4 py-3 font-medium text-pk-blue">{s.nome}</td>
-                  <td className="px-4 py-3 text-gray-500 font-mono text-xs">{s.idExterno || "—"}</td>
+              {series.map((s) => (
+                <tr key={s.id} className="border-b border-pk-border/50 hover:bg-pk-surface-2 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs text-pk-subtle">{s.id}</td>
+                  <td className="px-4 py-3 font-semibold text-pk-text">{s.nome}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-pk-muted">{s.idExterno || "—"}</td>
                   <td className="px-4 py-3">
-                    {s.logoUrl ? (
-                      <img
-                        src={s.logoUrl}
-                        alt={s.nome}
-                        className="h-8 object-contain"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
+                    {s.logoUrl
+                      ? <img src={s.logoUrl} alt={s.nome} className="h-7 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      : <span className="text-pk-subtle">—</span>}
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => openEdit(s)}
-                        className="px-3 py-1 bg-pk-blue text-white rounded text-xs font-medium hover:bg-pk-blue-light transition-colors"
-                      >
-                        Editar
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1.5 justify-end">
+                      <button onClick={() => { setForm({ nome: s.nome, idExterno: s.idExterno ?? "", logoUrl: s.logoUrl ?? "" }); setEditId(s.id); setView("edit"); }}
+                        className="p-1.5 rounded-lg text-pk-muted hover:text-pk-blue hover:bg-pk-surface-3 transition-colors cursor-pointer" aria-label="Editar">
+                        <Pencil size={14} />
                       </button>
-                      <button
-                        onClick={() => setDeleteTarget(s)}
-                        className="px-3 py-1 bg-pk-red text-white rounded text-xs font-medium hover:bg-pk-red-dark transition-colors"
-                      >
-                        Excluir
+                      <button onClick={() => setDeleteTarget(s)}
+                        className="p-1.5 rounded-lg text-pk-muted hover:text-pk-red hover:bg-pk-surface-3 transition-colors cursor-pointer" aria-label="Excluir">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   </td>
@@ -209,78 +159,29 @@ export default function SeriesPage() {
         )}
       </div>
 
-      <Pagination
-        page={pageInfo.number}
-        totalPages={pageInfo.totalPages}
-        totalElements={pageInfo.totalElements}
-        onPage={(p) => load(p, search)}
-      />
+      <Pagination page={pageInfo.number} totalPages={pageInfo.totalPages} totalElements={pageInfo.totalElements} onPage={(p) => load(p, search)} />
 
-      {/* Create / Edit Modal */}
+      {/* Form Modal */}
       {(view === "create" || view === "edit") && (
-        <Modal
-          title={view === "create" ? "Nova Série" : "Editar Série"}
-          onClose={closeModal}
-        >
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Nome <span className="text-pk-red">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="ex: Base"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                ID Externo
-              </label>
-              <input
-                type="text"
-                value={form.idExterno}
-                onChange={(e) => setForm({ ...form, idExterno: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="ex: base"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                URL do Logo
-              </label>
-              <input
-                type="url"
-                value={form.logoUrl}
-                onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-                className="w-full border border-pk-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pk-red"
-                placeholder="https://..."
-              />
-              {form.logoUrl && (
-                <img
-                  src={form.logoUrl}
-                  alt="preview"
-                  className="mt-2 h-10 object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              )}
-            </div>
+        <Modal title={view === "create" ? "Nova Série" : "Editar Série"} onClose={() => setView("list")}>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Field label="Nome" required>
+              <Input required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="ex: Base" />
+            </Field>
+            <Field label="ID Externo">
+              <Input value={form.idExterno} onChange={(e) => setForm({ ...form, idExterno: e.target.value })} placeholder="ex: base" />
+            </Field>
+            <Field label="URL do Logo">
+              <Input type="url" value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://..." />
+              {form.logoUrl && <img src={form.logoUrl} alt="preview" className="mt-2 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />}
+            </Field>
             <div className="flex gap-3 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors disabled:opacity-60"
-              >
-                {saving ? "Salvando..." : view === "create" ? "Criar Série" : "Salvar Alterações"}
+              <button type="submit" disabled={saving}
+                className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg transition-colors disabled:opacity-60 cursor-pointer text-sm">
+                {saving ? "Salvando..." : view === "create" ? "Criar Série" : "Salvar"}
               </button>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-4 py-2 border border-pk-border rounded-lg text-sm hover:bg-pk-gray transition-colors"
-              >
+              <button type="button" onClick={() => setView("list")}
+                className="px-4 py-2.5 border border-pk-border rounded-lg text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 transition-colors cursor-pointer">
                 Cancelar
               </button>
             </div>
@@ -288,37 +189,26 @@ export default function SeriesPage() {
         </Modal>
       )}
 
-      {/* Delete Confirm Modal */}
+      {/* Delete Modal */}
       {deleteTarget && (
-        <Modal title="Confirmar Exclusão" onClose={() => setDeleteTarget(null)}>
-          <p className="text-gray-700 mb-4">
-            Deseja excluir a série <strong>"{deleteTarget.nome}"</strong>?
-            Esta ação não pode ser desfeita.
+        <Modal title="Confirmar exclusão" onClose={() => setDeleteTarget(null)}>
+          <p className="text-pk-muted text-sm mb-5">
+            Excluir <span className="font-semibold text-pk-text">"{deleteTarget.nome}"</span>? Esta ação não pode ser desfeita.
           </p>
           <div className="flex gap-3">
-            <button
-              onClick={() => handleDelete(deleteTarget)}
-              className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2 rounded-lg transition-colors"
-            >
+            <button onClick={() => handleDelete(deleteTarget)}
+              className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg transition-colors cursor-pointer text-sm">
               Excluir
             </button>
-            <button
-              onClick={() => setDeleteTarget(null)}
-              className="flex-1 border border-pk-border rounded-lg py-2 text-sm hover:bg-pk-gray transition-colors"
-            >
+            <button onClick={() => setDeleteTarget(null)}
+              className="flex-1 border border-pk-border rounded-lg py-2.5 text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 transition-colors cursor-pointer">
               Cancelar
             </button>
           </div>
         </Modal>
       )}
 
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

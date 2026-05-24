@@ -1,6 +1,5 @@
 package senac.tsi.pokemontcg.infrastructure;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import senac.tsi.pokemontcg.exceptions.ErrorResponse;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
