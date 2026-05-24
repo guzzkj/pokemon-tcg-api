@@ -1,53 +1,170 @@
-#  Pokémon TCG API RESTful
+# Pokemon TCG API RESTful
 
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-green?style=for-the-badge&logo=spring)
-![Java 17](https://img.shields.io/badge/Java-17+-orange?style=for-the-badge&logo=java)
-![H2 Database](https://img.shields.io/badge/H2-Database-blue?style=for-the-badge&logo=sqlite)
-![Swagger](https://img.shields.io/badge/Swagger-OpenAPI-lightgrey?style=for-the-badge&logo=swagger)
+API RESTful em Java 17 e Spring Boot para catalogo de cartas, colecoes, series, tipos e detalhes estatisticos do Pokemon TCG.
 
-Uma API RESTful desenvolvida inteiramente em **Java e Spring Boot** para gerenciar e catalogar Cartas, Coleções, Séries e Tipagens do universo de **Pokémon Trading Card Game**. Desenvolvida como parte de uma matéria de Web Services, visa colocar em prática técnicas maduras de arquitetura escalável e segurança no back-end.
+## Requisitos atendidos
 
-##  Principais Features & Requisitos Atendidos
+| Item | Status | Onde verificar |
+| --- | --- | --- |
+| Spring Boot, Java 17 e Maven | Atendido | `api/pom.xml` |
+| H2 em memoria + Spring Data JPA | Atendido | `api/src/main/resources/application.properties` |
+| 5 entidades de dominio | Atendido | `api/src/main/java/senac/tsi/pokemontcg/entities` |
+| Relacionamentos One-to-One, One-to-Many e Many-to-Many | Atendido | `Carta`, `Colecao`, `Serie`, `Tipo`, `DetalheEstatistica` |
+| Bean Validation + enum | Atendido | entidades e `CategoriaCartaEnum` |
+| CRUD completo por entidade | Atendido | controllers de `cartas`, `colecoes`, `series`, `tipos`, `detalhes` |
+| Listagens paginadas | Atendido | parametros `page`, `size`, `sort` via `Pageable` |
+| Consulta personalizada por entidade | Atendido | rotas `/buscar` e consultas relacionadas |
+| Swagger/OpenAPI | Atendido | `http://localhost:8080/swagger-ui.html` |
+| HATEOAS | Atendido | respostas com `_links`, `EntityModel` e `PagedModel` |
+| Idempotencia em POST | Atendido | header `X-Idempotency-Key` |
+| Autenticacao por API Key | Atendido | header `X-API-Key` |
+| Rate limiting | Atendido | headers `X-RateLimit-*` e `Retry-After` |
+| CORS | Atendido | `CorsConfig` |
+| Versionamento por header | Atendido | `X-API-Version: v1` ou `v2` em `GET /cartas/{id}` |
+| Tratamento global de erros | Atendido | `GlobalExceptionHandler` |
 
-* **Separação Abstrata de Camadas:** MVC canônico utilizando as demarcações entre `Entities`, `Repositories`, `Services` e `Controllers`.
-* **Banco de Dados Relacional:** Totalmente engatado num banco H2 em memória facilitando testes, possuindo relações estritas de Multiplicidade (`@OneToOne`, `@OneToMany` e `@ManyToMany`).
-* **HATEOAS Glory:** Implementação purista do nível 3 de REST. Navegação facilitada com hyperlinks (`self`, `listar_todas`, etc) anexados dinamicamente nos payloads.
-* **Segurança Anti-Crash & Graceful Degradation:** Controllers e ExceptionHandlers exaustivamente preparados para lidar com Injeção maliciosa e quebras de integridade que derrubariam a aplicação (Proteção contra Timeouts, TypeMismatch e Constraints Duplicadas com Códigos 400x nativos).
-* **Consumo de API Externa Dinâmico:** Um dos endpoints consome ativamente a API pública do **TCGdex** via `RestClient` do Spring.  
+## Como executar
 
-##  Estrutura do Domínio e Endpoints
+Entre na pasta da API e rode o Maven Wrapper:
 
-Temos exatas 5 entidades vitais mapeadas:
-1. `Cartas`
-2. `Colecoes`
-3. `Series`
-4. `Tipos`
-5. `DetalheEstatistica`
+```powershell
+cd api
+.\mvnw.cmd spring-boot:run
+```
 
-Todas operam sob o padrão HTTP Verbs para CRUD Completo, com a adição obrigatória de **Buscas Paginadas** (`?page=0&size=10`) e rotas extras como `/buscar?nome=X`.
+Linux/macOS:
 
-##  Como Iniciar a Aplicação
+```bash
+cd api
+./mvnw spring-boot:run
+```
 
-Este projeto é autocontido e fácil de avaliar. Não requer softwares pesados ou bancos separados rodando na sua máquina.
+Servicos locais:
 
-1. Clone o repositório ou baixe o código.
-2. Na raiz do projeto, abra um terminal e rode através do **Maven Wrapper**:
-   * No Windows: `mvnw.cmd spring-boot:run`
-   * No Linux/Mac: `./mvnw spring-boot:run`
-3. Após o Tomcat indicar *Started on port 8080*, a API estará de pé!
+| Recurso | URL |
+| --- | --- |
+| API | `http://localhost:8080` |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` |
+| OpenAPI JSON | `http://localhost:8080/api-docs` |
+| H2 Console | `http://localhost:8080/h2-console` |
 
-##  Documentação Interativa 
+Credenciais H2:
 
-Esta API possui uma UI belíssima e guiada construída com o Swagger no padrão OpenAPI3. Todos os schemas e payloads de requisição estão expostos lá.
+| Campo | Valor |
+| --- | --- |
+| JDBC URL | `jdbc:h2:mem:pokemondb` |
+| User | `sa` |
+| Password | vazio |
 
-Acesse: **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
+## Autenticacao
 
-## Importando a Coleção no Postman
+Gere uma chave:
 
-É testador? A forma mais fácil de testar todos os cenários sem precisar montar JSON a JSON no Postman é usando nosso schema automático:
+```http
+POST /api-keys?nomeCliente=avaliador
+```
 
-1. Abra seu Postman.
-2. Clique no botão de **"Import"**.
-3. Selecione a aba "Link" / "URL".
-4. Cole o link do schema bruto gerado nativamente pela nossa API rodando: `http://localhost:8080/v3/api-docs`
-5. O Postman gerará instantaneamente todas as pastas e rotas baseadas na nossa documentação. Divirta-se!
+Use a chave retornada nas demais rotas:
+
+```http
+X-API-Key: sua_chave
+```
+
+Rotas publicas:
+
+| Rota | Motivo |
+| --- | --- |
+| `/api-keys` | gerar chave inicial |
+| `/swagger-ui.html` | documentacao |
+| `/api-docs` | especificacao OpenAPI |
+| `/h2-console` | console do banco local |
+
+## Headers avancados
+
+| Header | Uso | Exemplo |
+| --- | --- | --- |
+| `X-API-Key` | autenticar endpoints protegidos | `X-API-Key: abc123` |
+| `X-Idempotency-Key` | evitar POST duplicado | `X-Idempotency-Key: criar-carta-001` |
+| `X-API-Version` | escolher versao de resposta | `X-API-Version: v2` |
+
+Rate limit retorna:
+
+| Header | Significado |
+| --- | --- |
+| `X-RateLimit-Limit` | limite da janela |
+| `X-RateLimit-Remaining` | requisicoes restantes |
+| `X-RateLimit-Reset` | segundos ate reset |
+| `Retry-After` | segundos para tentar de novo apos HTTP 429 |
+
+## Exemplos rapidos
+
+Listar cartas:
+
+```http
+GET /cartas?page=0&size=10&sort=nome,asc
+X-API-Key: sua_chave
+```
+
+Buscar carta com versao 2:
+
+```http
+GET /cartas/1
+X-API-Key: sua_chave
+X-API-Version: v2
+```
+
+Criar carta com idempotencia:
+
+```http
+POST /cartas
+X-API-Key: sua_chave
+X-Idempotency-Key: criar-carta-001
+Content-Type: application/json
+
+{
+  "nome": "Charizard",
+  "categoria": "POKEMON",
+  "pontosDeVida": 120,
+  "imagemUrl": "https://assets.tcgdex.net/pt/base/base1/4/high.png",
+  "numeroLocal": "4",
+  "idExterno": "base1-4"
+}
+```
+
+## Postman
+
+Opcao 1: importar a colecao versionada:
+
+1. Abra o Postman.
+2. Use `Import`.
+3. Selecione o arquivo `postman_collection.json`.
+4. Execute primeiro `Setup > Gerar API Key`.
+5. A variavel `apiKey` sera preenchida automaticamente.
+
+Opcao 2: gerar a colecao pelo proprio OpenAPI:
+
+1. Execute a API.
+2. Abra o Postman.
+3. Use `Import`.
+4. Selecione `Link`.
+5. Informe `http://localhost:8080/api-docs`.
+
+## Testes
+
+```powershell
+cd api
+.\mvnw.cmd test
+```
+
+Observacao: a carga inicial importa dados da TCGdex. Em ambientes sem internet, a inicializacao pode falhar ou ficar lenta.
+
+## Tabela de importancia dos ajustes
+
+| Prioridade | Ajuste | Por que importa | Status |
+| --- | --- | --- | --- |
+| Alta | Corrigir comando de execucao no README | avaliador precisa conseguir rodar projeto sem erro de diretorio | Feito |
+| Alta | Corrigir URL do OpenAPI no README | Postman e avaliador dependem da URL certa | Feito |
+| Alta | Documentar headers avancados no Swagger | criterios exigem API Key, idempotencia e versionamento claros | Feito |
+| Media | Expor headers de rate limit no CORS | frontend consegue ler limite e retry | Feito |
+| Media | Explicar fluxo de API Key | endpoints protegidos precisam de chave | Feito |
+| Baixa | Gerar arquivo `postman_collection.json` versionado | entrega fica mais completa e facilita demonstracao | Feito |

@@ -1,0 +1,706 @@
+{
+  "info": {
+    "_postman_id": "9e3d7cf8-4a3f-4b4a-a111-2f9f31d2b8a6",
+    "name": "Pokemon TCG API RESTful",
+    "description": "Colecao de testes para a API Pokemon TCG. Execute primeiro 'Gerar API Key' e copie o campo 'chave' para a variavel apiKey.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "idempotencyKey",
+      "value": "postman-{{$timestamp}}",
+      "type": "string"
+    },
+    {
+      "key": "cartaId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "colecaoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "serieId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tipoId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "detalheId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Setup",
+      "item": [
+        {
+          "name": "Gerar API Key",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-keys?nomeCliente=avaliador",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-keys"
+              ],
+              "query": [
+                {
+                  "key": "nomeCliente",
+                  "value": "avaliador"
+                }
+              ]
+            },
+            "description": "Rota publica. Copie o valor de 'chave' retornado para a variavel apiKey."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API Key criada', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "if (body.chave) {",
+                  "    pm.collectionVariables.set('apiKey', body.chave);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/swagger-ui.html",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "swagger-ui.html"
+              ]
+            }
+          }
+        },
+        {
+          "name": "OpenAPI JSON",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api-docs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api-docs"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cartas",
+      "item": [
+        {
+          "name": "Listar cartas paginadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cartas?page=0&size=10&sort=nome,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "nome,asc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar carta v1 por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "v1"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cartas/{{cartaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas",
+                "{{cartaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar carta v2 por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Version",
+                "value": "v2"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/cartas/{{cartaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas",
+                "{{cartaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar cartas por nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cartas/buscar?nome=Char&page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas",
+                "buscar"
+              ],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Char"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Criar carta com idempotencia",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Charizard Postman\",\n  \"categoria\": \"POKEMON\",\n  \"pontosDeVida\": 120,\n  \"imagemUrl\": \"https://assets.tcgdex.net/pt/base/base1/4/high.png\",\n  \"numeroLocal\": \"4\",\n  \"idExterno\": \"postman-{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cartas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Atualizar carta",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Charizard Atualizado\",\n  \"categoria\": \"POKEMON\",\n  \"pontosDeVida\": 150,\n  \"imagemUrl\": \"https://assets.tcgdex.net/pt/base/base1/4/high.png\",\n  \"numeroLocal\": \"4\",\n  \"idExterno\": \"base1-4-atualizado\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/cartas/{{cartaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas",
+                "{{cartaId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Deletar carta",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cartas/{{cartaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cartas",
+                "{{cartaId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Colecoes",
+      "item": [
+        {
+          "name": "Listar colecoes paginadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/colecoes?page=0&size=10"
+          }
+        },
+        {
+          "name": "Buscar colecao por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/colecoes/{{colecaoId}}"
+          }
+        },
+        {
+          "name": "Buscar colecoes por nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/colecoes/buscar?nome=Base&page=0&size=10"
+          }
+        },
+        {
+          "name": "Listar cartas da colecao",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/colecoes/{{colecaoId}}/cartas?page=0&size=10"
+          }
+        },
+        {
+          "name": "Criar colecao",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "colecao-{{$timestamp}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Colecao Postman\",\n  \"idExterno\": \"collection-{{$timestamp}}\",\n  \"logoUrl\": \"https://example.com/logo.png\"\n}"
+            },
+            "url": "{{baseUrl}}/colecoes"
+          }
+        },
+        {
+          "name": "Atualizar colecao",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Colecao Atualizada\",\n  \"idExterno\": \"collection-updated\",\n  \"logoUrl\": \"https://example.com/logo.png\"\n}"
+            },
+            "url": "{{baseUrl}}/colecoes/{{colecaoId}}"
+          }
+        },
+        {
+          "name": "Deletar colecao",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/colecoes/{{colecaoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Series",
+      "item": [
+        {
+          "name": "Listar series paginadas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/series?page=0&size=10"
+          }
+        },
+        {
+          "name": "Buscar serie por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/series/{{serieId}}"
+          }
+        },
+        {
+          "name": "Buscar series por nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/series/buscar?nome=Base&page=0&size=10"
+          }
+        },
+        {
+          "name": "Criar serie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "serie-{{$timestamp}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Serie Postman\",\n  \"idExterno\": \"serie-{{$timestamp}}\",\n  \"logoUrl\": \"https://example.com/serie.png\"\n}"
+            },
+            "url": "{{baseUrl}}/series"
+          }
+        },
+        {
+          "name": "Atualizar serie",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Serie Atualizada\",\n  \"idExterno\": \"serie-updated\",\n  \"logoUrl\": \"https://example.com/serie.png\"\n}"
+            },
+            "url": "{{baseUrl}}/series/{{serieId}}"
+          }
+        },
+        {
+          "name": "Deletar serie",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/series/{{serieId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tipos",
+      "item": [
+        {
+          "name": "Listar tipos paginados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tipos?page=0&size=10"
+          }
+        },
+        {
+          "name": "Buscar tipo por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tipos/{{tipoId}}"
+          }
+        },
+        {
+          "name": "Buscar tipos por nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tipos/buscar?nome=Fire&page=0&size=10"
+          }
+        },
+        {
+          "name": "Criar tipo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "tipo-{{$timestamp}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Tipo Postman {{$timestamp}}\"\n}"
+            },
+            "url": "{{baseUrl}}/tipos"
+          }
+        },
+        {
+          "name": "Atualizar tipo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Tipo Atualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/tipos/{{tipoId}}"
+          }
+        },
+        {
+          "name": "Adicionar carta ao tipo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "tipo-carta-{{$timestamp}}"
+              }
+            ],
+            "url": "{{baseUrl}}/tipos/{{tipoId}}/cartas/{{cartaId}}"
+          }
+        },
+        {
+          "name": "Remover carta do tipo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/tipos/{{tipoId}}/cartas/{{cartaId}}"
+          }
+        },
+        {
+          "name": "Deletar tipo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/tipos/{{tipoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Detalhes Estatisticos",
+      "item": [
+        {
+          "name": "Listar detalhes paginados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/detalhes?page=0&size=10"
+          }
+        },
+        {
+          "name": "Buscar detalhe por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/detalhes/{{detalheId}}"
+          }
+        },
+        {
+          "name": "Buscar detalhe por carta",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/detalhes/carta/{{cartaId}}"
+          }
+        },
+        {
+          "name": "Buscar detalhes por artista",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/detalhes/buscar?artista=Ken&page=0&size=10"
+          }
+        },
+        {
+          "name": "Criar detalhe para carta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Idempotency-Key",
+                "value": "detalhe-{{$timestamp}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"raridade\": \"Rare\",\n  \"artista\": \"Postman Artist\",\n  \"descricao\": \"Detalhe criado pela colecao Postman\",\n  \"regulacao\": \"A\"\n}"
+            },
+            "url": "{{baseUrl}}/detalhes/carta/{{cartaId}}"
+          }
+        },
+        {
+          "name": "Atualizar detalhe",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"raridade\": \"Rare Holo\",\n  \"artista\": \"Postman Artist Atualizado\",\n  \"descricao\": \"Detalhe atualizado\",\n  \"regulacao\": \"B\"\n}"
+            },
+            "url": "{{baseUrl}}/detalhes/{{detalheId}}"
+          }
+        },
+        {
+          "name": "Deletar detalhe",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/detalhes/{{detalheId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "TCGdex externa",
+      "item": [
+        {
+          "name": "Listar cartas TCGdex",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tcgdex/cartas?page=0&size=10"
+          }
+        },
+        {
+          "name": "Buscar cartas TCGdex por nome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tcgdex/cartas/buscar?nome=pikachu&page=0&size=10"
+          }
+        },
+        {
+          "name": "Listar colecoes TCGdex",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/tcgdex/colecoes?page=0&size=10"
+          }
+        }
+      ]
+    }
+  ]
+}

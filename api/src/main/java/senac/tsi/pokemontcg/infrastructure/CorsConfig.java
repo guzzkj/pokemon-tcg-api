@@ -24,7 +24,14 @@ public class CorsConfig implements WebMvcConfigurer {
                         "X-Idempotency-Key",
                         "X-API-Version"
                 )
-                .exposedHeaders("Location", "X-API-Version")
+                .exposedHeaders(
+                        "Location",
+                        "X-API-Version",
+                        "X-RateLimit-Limit",
+                        "X-RateLimit-Remaining",
+                        "X-RateLimit-Reset",
+                        "Retry-After"
+                )
                 .allowCredentials(false)
                 .maxAge(3600);
     }
