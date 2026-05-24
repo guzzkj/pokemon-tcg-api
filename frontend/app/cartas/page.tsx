@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { get, post, put, del, extractList } from "@/lib/api";
-import { Carta, Colecao, PagedResponse, ApiError } from "@/lib/types";
+import { Carta, CartaV2, Colecao, PagedResponse, ApiError } from "@/lib/types";
 import Modal from "@/components/Modal";
 import Pagination from "@/components/Pagination";
 import Toast from "@/components/Toast";
 import { Field, Input, Select } from "@/components/Field";
-import { CreditCard, Plus, Search, X, Pencil, Trash2, Filter } from "lucide-react";
+import { CreditCard, Plus, Search, X, Pencil, Trash2, Filter, GitCompare } from "lucide-react";
 
 type View = "list" | "create" | "edit";
 type Categoria = "POKEMON" | "TREINADOR" | "ENERGIA";
@@ -39,6 +39,8 @@ export default function CartasPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Carta | null>(null);
+  const [versionModal, setVersionModal] = useState<{ v1: Carta; v2: CartaV2 } | null>(null);
+  const [versionLoadingId, setVersionLoadingId] = useState<number | null>(null);
 
   const load = useCallback(async (page = 0, nome = "", colecaoId = "") => {
     setLoading(true);
@@ -71,6 +73,21 @@ export default function CartasPage() {
   async function handleDelete(c: Carta) {
     try { await del(`/cartas/${c.id}`); setToast({ message: `"${c.nome}" removida.`, type: "success" }); setDeleteTarget(null); load(pageInfo.number, search, filterColecao); }
     catch (e) { setToast({ message: (e as ApiError).mensagem ?? "Erro", type: "error" }); setDeleteTarget(null); }
+  }
+
+  async function demonstrarVersoes(cartaId: number) {
+    setVersionLoadingId(cartaId);
+    try {
+      const [v1, v2] = await Promise.all([
+        get<Carta>(`/cartas/${cartaId}`, { headers: { "X-API-Version": "v1" } }),
+        get<CartaV2>(`/cartas/${cartaId}`, { headers: { "X-API-Version": "v2" } }),
+      ]);
+      setVersionModal({ v1, v2 });
+    } catch (e) {
+      setToast({ message: (e as ApiError).mensagem ?? "Erro ao buscar versoes", type: "error" });
+    } finally {
+      setVersionLoadingId(null);
+    }
   }
 
   return (
@@ -144,6 +161,8 @@ export default function CartasPage() {
                       <div className="flex gap-1.5 justify-end">
                         <button onClick={() => { setForm({ nome: c.nome, categoria: c.categoria, pontosDeVida: c.pontosDeVida?.toString() ?? "", imagemUrl: c.imagemUrl ?? "", idExterno: c.idExterno ?? "", numeroLocal: c.numeroLocal ?? "", colecaoId: c.colecao?.id?.toString() ?? "" }); setEditId(c.id); setView("edit"); }}
                           className="p-1.5 rounded-lg text-pk-muted hover:text-pk-blue hover:bg-pk-surface-3 transition-colors cursor-pointer"><Pencil size={14} /></button>
+                        <button onClick={() => demonstrarVersoes(c.id)} disabled={versionLoadingId === c.id} title="Comparar V1/V2"
+                          className="p-1.5 rounded-lg text-pk-muted hover:text-pk-yellow hover:bg-pk-surface-3 transition-colors cursor-pointer disabled:opacity-50"><GitCompare size={14} /></button>
                         <button onClick={() => setDeleteTarget(c)}
                           className="p-1.5 rounded-lg text-pk-muted hover:text-pk-red hover:bg-pk-surface-3 transition-colors cursor-pointer"><Trash2 size={14} /></button>
                       </div>
@@ -195,10 +214,50 @@ export default function CartasPage() {
 
       {deleteTarget && (
         <Modal title="Confirmar exclusão" onClose={() => setDeleteTarget(null)}>
-          <p className="text-pk-muted text-sm mb-5">Excluir <span className="font-semibold text-pk-text">"{deleteTarget.nome}"</span>?</p>
+          <p className="text-pk-muted text-sm mb-5">Excluir <span className="font-semibold text-pk-text">{deleteTarget.nome}</span>?</p>
           <div className="flex gap-3">
             <button onClick={() => handleDelete(deleteTarget)} className="flex-1 bg-pk-red hover:bg-pk-red-dark text-white font-bold py-2.5 rounded-lg text-sm cursor-pointer">Excluir</button>
             <button onClick={() => setDeleteTarget(null)} className="flex-1 border border-pk-border rounded-lg py-2.5 text-sm text-pk-muted hover:text-pk-text hover:bg-pk-surface-2 cursor-pointer">Cancelar</button>
+          </div>
+        </Modal>
+      )}
+
+      {versionModal && (
+        <Modal title="Comparar V1 e V2" onClose={() => setVersionModal(null)}>
+          <div className="space-y-4">
+            <div className="bg-pk-surface-3 border border-pk-border rounded-lg p-3">
+              <p className="text-xs font-semibold text-pk-subtle uppercase tracking-wider mb-2">Requisicao</p>
+              <code className="block text-xs text-pk-muted font-mono break-all">
+                GET /cartas/{versionModal.v1.id} | X-API-Version: v1 ou v2
+              </code>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-3">
+              <div className="border border-pk-border rounded-lg p-3 bg-pk-surface">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-pk-text">V1</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-pk-blue/10 text-pk-blue border border-pk-blue/20 text-xs font-bold font-mono">PADRAO</span>
+                </div>
+                <dl className="space-y-2 text-sm">
+                  <div><dt className="text-pk-subtle text-xs">Nome</dt><dd className="text-pk-text font-semibold">{versionModal.v1.nome}</dd></div>
+                  <div><dt className="text-pk-subtle text-xs">Categoria</dt><dd className="text-pk-muted font-mono text-xs">{versionModal.v1.categoria}</dd></div>
+                  <div><dt className="text-pk-subtle text-xs">HP</dt><dd className="text-pk-muted font-mono text-xs">{versionModal.v1.pontosDeVida ?? "sem HP"}</dd></div>
+                </dl>
+              </div>
+
+              <div className="border border-pk-yellow/30 rounded-lg p-3 bg-pk-yellow/5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-pk-text">V2</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-pk-yellow/10 text-pk-yellow border border-pk-yellow/20 text-xs font-bold font-mono">NOVO</span>
+                </div>
+                <dl className="space-y-2 text-sm">
+                  <div><dt className="text-pk-subtle text-xs">Nome</dt><dd className="text-pk-text font-semibold">{versionModal.v2.nome}</dd></div>
+                  <div><dt className="text-pk-subtle text-xs">Categoria</dt><dd className="text-pk-muted font-mono text-xs">{versionModal.v2.categoria}</dd></div>
+                  <div><dt className="text-pk-subtle text-xs">HP</dt><dd className="text-pk-muted font-mono text-xs">{versionModal.v2.pontosDeVida ?? "sem HP"}</dd></div>
+                  <div><dt className="text-pk-subtle text-xs">nomeCompleto</dt><dd className="text-pk-yellow font-semibold">{versionModal.v2.nomeCompleto}</dd></div>
+                </dl>
+              </div>
+            </div>
           </div>
         </Modal>
       )}

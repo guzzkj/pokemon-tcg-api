@@ -25,6 +25,15 @@ export interface Carta {
   colecao?: Colecao;
 }
 
+export interface CartaV2 extends Carta {
+  nomeCompleto: string;
+}
+
+export interface EntityModel<T> {
+  _links?: Record<string, { href: string }>;
+  content?: T;
+}
+
 export interface Tipo {
   id: number;
   nome: string;
