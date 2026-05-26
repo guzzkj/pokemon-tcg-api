@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Configuration;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @Configuration
 @SecurityScheme(
@@ -34,22 +35,12 @@ import org.springframework.context.annotation.Configuration;
                 title = "Pokemon TCG API",
                 version = "1.0",
                 description = """
-                        API RESTful para gerenciamento de cartas do Pokemon TCG.
-
-                        Funcionalidades:
-                        - CRUD completo para 5 entidades: Carta, DetalheEstatistica, Colecao, Tipo e Serie
-                        - Integracao com a API externa TCGdex (endpoint oficial https://api.tcgdex.net/v2/en)
-                        - Paginacao em todas as rotas de listagem (Pageable)
-                        - HATEOAS com links de navegacao em todas as respostas
-                        - Banco de dados H2 em memoria (acessivel em /h2-console)
-                        - Autenticacao por X-API-Key
-                        - Idempotencia em POST por X-Idempotency-Key
-                        - Rate limiting com headers X-RateLimit-* e Retry-After
-                        - Versionamento por header X-API-Version
-
-                        Desenvolvido para a disciplina de Web Services - SENAC TSI.
-                        """
-        )
+        API RESTful para gerenciamento de cartas do Pokemon TCG.
+        """
+        ),
+        security = {
+                @SecurityRequirement(name = "ApiKeyAuth")
+        }
 )
 public class OpenApiConfig {
 }
