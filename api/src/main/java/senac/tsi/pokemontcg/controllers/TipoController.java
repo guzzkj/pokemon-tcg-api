@@ -45,6 +45,8 @@ public class TipoController {
     @Operation(summary = "Lista todos os tipos", description = "Retorna todos os tipos de energia cadastrados, com paginação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -63,6 +65,8 @@ public class TipoController {
                description = "Retorna o tipo com a lista de cartas associadas e links HATEOAS.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tipo encontrado"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -85,6 +89,10 @@ public class TipoController {
             @ApiResponse(responseCode = "201", description = "Tipo criado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -106,7 +114,11 @@ public class TipoController {
             @ApiResponse(responseCode = "200", description = "Tipo atualizado"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -124,6 +136,8 @@ public class TipoController {
 
     @Operation(summary = "Remove um tipo")
     @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -140,6 +154,8 @@ public class TipoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -159,6 +175,8 @@ public class TipoController {
                description = "Cria a associação Many-to-Many entre Tipo e Carta (insere na tabela carta_tipo).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta adicionada ao tipo"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo ou Carta não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -178,6 +196,8 @@ public class TipoController {
                description = "Remove a associação Many-to-Many entre Tipo e Carta.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Associação removida com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Tipo ou Carta não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",

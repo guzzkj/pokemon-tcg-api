@@ -46,6 +46,8 @@ public class SerieController {
                description = "Retorna todas as séries cadastradas, com paginação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -64,6 +66,8 @@ public class SerieController {
                description = "Retorna os dados de uma série com links HATEOAS de navegação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Série encontrada"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -85,6 +89,10 @@ public class SerieController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Série criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -113,7 +121,11 @@ public class SerieController {
             @ApiResponse(responseCode = "200", description = "Série atualizada"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -131,6 +143,8 @@ public class SerieController {
 
     @Operation(summary = "Remove uma série")
     @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Série não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -147,6 +161,8 @@ public class SerieController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

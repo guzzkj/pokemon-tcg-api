@@ -46,6 +46,8 @@ public class DetalheEstatisticaController {
                description = "Retorna todos os detalhes cadastrados, com paginação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -63,6 +65,8 @@ public class DetalheEstatisticaController {
     @Operation(summary = "Busca um detalhe estatístico por ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalhe encontrado"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -83,6 +87,8 @@ public class DetalheEstatisticaController {
                description = "Retorna o detalhe estatístico associado à carta informada (relação 1:1).")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Detalhe encontrado"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta ou detalhe não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -105,7 +111,11 @@ public class DetalheEstatisticaController {
             @ApiResponse(responseCode = "201", description = "Detalhe criado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — detalhe já existe para esta carta",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -135,6 +145,8 @@ public class DetalheEstatisticaController {
             @ApiResponse(responseCode = "200", description = "Detalhe atualizado"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -153,6 +165,8 @@ public class DetalheEstatisticaController {
 
     @Operation(summary = "Remove um detalhe estatístico")
     @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Detalhe não encontrado",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -169,6 +183,8 @@ public class DetalheEstatisticaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'artista' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

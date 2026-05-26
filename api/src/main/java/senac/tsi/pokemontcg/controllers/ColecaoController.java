@@ -54,6 +54,8 @@ public class ColecaoController {
                description = "Retorna todas as coleções cadastradas, com paginação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -72,6 +74,8 @@ public class ColecaoController {
                description = "Retorna os dados de uma coleção com links HATEOAS de navegação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Coleção encontrada"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -94,6 +98,10 @@ public class ColecaoController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Coleção criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -123,7 +131,11 @@ public class ColecaoController {
             @ApiResponse(responseCode = "200", description = "Coleção atualizada"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito — recurso já existe",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -141,6 +153,8 @@ public class ColecaoController {
 
     @Operation(summary = "Remove uma coleção")
     @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -157,6 +171,8 @@ public class ColecaoController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' não informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -176,6 +192,8 @@ public class ColecaoController {
                description = "Retorna todas as cartas pertencentes a uma coleção específica, com paginação.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de cartas da coleção"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",

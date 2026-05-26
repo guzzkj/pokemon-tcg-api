@@ -55,6 +55,8 @@ public class CartaController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -80,6 +82,8 @@ public class CartaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta encontrada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Versão de API não suportada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -127,6 +131,8 @@ public class CartaController {
             @ApiResponse(responseCode = "201", description = "Carta criada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos (campos obrigatórios faltando ou formato errado)",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -163,6 +169,8 @@ public class CartaController {
             @ApiResponse(responseCode = "200", description = "Carta atualizada com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -186,6 +194,8 @@ public class CartaController {
         description = "Remove permanentemente uma carta do banco de dados. Retorna 204 sem corpo."
     )
     @ApiResponses({
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -205,6 +215,8 @@ public class CartaController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
             @ApiResponse(responseCode = "400", description = "Parâmetro 'nome' inválido",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))

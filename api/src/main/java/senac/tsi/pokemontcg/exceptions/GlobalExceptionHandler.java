@@ -11,18 +11,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import jakarta.validation.ConstraintViolationException;
 
-/**
- * Centraliza o tratamento de exceções — intercepta erros de qualquer controller
- * e retorna um ErrorResponse padronizado.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -36,13 +28,6 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(404, "Recurso não encontrado na API TCGdex", ex.getMessage());
     }
 
-    @ExceptionHandler(ErroIntegracaoExternaException.class)
-    @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    public ErrorResponse handleErroIntegracao(ErroIntegracaoExternaException ex) {
-        return new ErrorResponse(502, "Erro de integração com serviço externo (TCGdex)", ex.getMessage());
-    }
-
-    // Coleta todas as mensagens de @NotBlank, @NotNull, @Size, etc.
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidacao(MethodArgumentNotValidException ex) {
@@ -74,12 +59,5 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return new ErrorResponse(400, "Parâmetro da URL com formato/tipo inválido", ex.getMessage());
-    }
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGenerico(Exception ex) {
-        log.error("Erro interno não tratado", ex);
-        return new ErrorResponse(500, "Erro interno do servidor", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
     }
 }

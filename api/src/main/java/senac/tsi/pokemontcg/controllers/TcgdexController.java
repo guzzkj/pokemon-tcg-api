@@ -66,6 +66,8 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de cartas da TCGdex"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -93,6 +95,8 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carta encontrada na TCGdex"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Carta não encontrada na TCGdex",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -115,6 +119,8 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de coleções da TCGdex"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -143,6 +149,8 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Coleção encontrada na TCGdex"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Coleção não encontrada na TCGdex",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
@@ -165,6 +173,8 @@ public class TcgdexController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Resultados da busca"),
+            @ApiResponse(responseCode = "401", description = "API Key ausente ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "429", description = "Limite de requisições excedido",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
